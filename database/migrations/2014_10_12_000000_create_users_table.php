@@ -26,7 +26,7 @@ class CreateUsersTable extends Migration
             $table->text("notification_token")->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->enum('auth_provider', ['email', 'google', 'facebook'])->default("email");
-            $table->text("avatar");
+            $table->text("avatar")->nullable();
 
             $table->rememberToken();
             $table->timestamps();
