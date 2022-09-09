@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Validator;
 
 class BaseController extends Controller
 {
+    protected $API_VERSION = "v1";
+    protected $API_URI = "api/v1/";
+
 
     public function resData($data, $error_type = FALSE, $code = 200)
     {
@@ -19,6 +22,14 @@ class BaseController extends Controller
     public function resMsg($data, $error_type = FALSE, $code = 200)
     {
         return response()->json(['error_type' => $error_type, 'messages' => $data], $code);
+    }
+    public function generateUserName($email)
+    {
+        $username = strstr($email, '@', true);
+        if (User::where(['username' => $username])->first()) {
+            return $username . rand(111, 999);
+        }
+        return $username;
     }
     public function userDisplay(User $user)
     {
@@ -31,7 +42,7 @@ class BaseController extends Controller
     {
         $validator = Validator::make($data, $rules, $messages);
         if ($validator->fails()) {
-            return $this->resMsg($validator->errors(), 'validation', 401);
+            return $this->resMsg($validator->errors(), 'validation', 400);
         }
     }
 }

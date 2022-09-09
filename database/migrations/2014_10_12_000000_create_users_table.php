@@ -24,6 +24,7 @@ class CreateUsersTable extends Migration
             $table->enum('type', ['voter', 'organizer', 'participant'])->default("voter");
             $table->double("balance")->default(0);
             $table->text("notification_token")->nullable();
+            $table->integer('email_verification_code')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->enum('auth_provider', ['email', 'google', 'facebook'])->default("email");
             $table->text("avatar")->nullable();

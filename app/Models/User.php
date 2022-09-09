@@ -29,6 +29,7 @@ class User extends Authenticatable
         'type',
         'balance',
         'notification_token',
+        'email_verification_code',
         'email_verified_at',
         'auth_provider',
         'avatar',
@@ -68,6 +69,10 @@ class User extends Authenticatable
 
 
     // relations
+    public function password_resets()
+    {
+        return $this->hasMany(PasswordReset::class);
+    }
     public function competitions()
     {
         return $this->hasMany(Competition::class, 'organizer_id');
