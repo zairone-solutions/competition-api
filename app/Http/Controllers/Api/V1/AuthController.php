@@ -129,10 +129,18 @@ class AuthController extends BaseController
         if (!Auth::once($credentials)) {
             return $this->resMsg(['message' => "Invalid login credentials!"], 'authentication', 400);
         }
+        if (!auth()->user()->email_verified_at) {
+            $email_code = rand(11111, 99999);
+            auth()->user()->update(['email_verification_code' => $email_code]);
 
+            $token = auth()->user()->createToken('email_verification_email', $request->get("deviceModel") ?? NULL, ["verify-email"]);
+
+            @Mail::to(auth()->user())->send(new EmailVerification(['code' => $email_code]));
+
+            return $this->resMsg(['message' => "Please verify you email to continue."], 'verification', 400);
+        }
         // auth()->user()->tokens()->delete();
         $token = auth()->user()->createToken('auth_token', $request->get("deviceModel") ?? NULL, [auth()->user()->type]);
-
 
         return $this->resData(["user" => $this->userDisplay(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
     }

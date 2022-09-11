@@ -97,4 +97,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(Ledger::class);
     }
+    public function category_suggests()
+    {
+        return $this->hasMany(Category::class, "suggest_id");
+    }
 }

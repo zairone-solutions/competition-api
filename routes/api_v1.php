@@ -24,10 +24,16 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
     Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::get("protected_test", "Controller@protected_test");
 
+        // Auth
         Route::post("logout", "AuthController@logout");
         Route::post("verify_email", "AuthController@verify_email")->middleware(['ability:verify-email']);
-        Route::post("verify_forget_password", "AuthController@verify_forget_password")->middleware(['ability:forget-password']);;
-        Route::post("reset_password", "AuthController@reset_password")->middleware(['ability:reset-password']);;
+        Route::post("verify_forget_password", "AuthController@verify_forget_password")->middleware(['ability:forget-password']);
+        Route::post("reset_password", "AuthController@reset_password")->middleware(['ability:reset-password']);
+
+        // Categories
+        Route::post("categories", "CategoryController@request");
+        Route::get("categories", "CategoryController@all");
+
     });
     Route::post("test_login", "Controller@test_login");
     Route::get("test", "Controller@test");

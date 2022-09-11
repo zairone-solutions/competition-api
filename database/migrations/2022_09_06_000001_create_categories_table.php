@@ -17,6 +17,7 @@ class CreateCategoriesTable extends Migration
             $table->bigIncrements("id");
             $table->string("title");
             $table->string("slug");
+            $table->foreignId("suggest_id")->nullable()->constrained('users')->cascadeOnUpdate()->nullOnDelete();
             $table->boolean("verified")->default(0);
             $table->timestamps();
         });

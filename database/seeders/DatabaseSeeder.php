@@ -47,8 +47,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // create categories
-        $category1 = Category::create(['title' => 'Cars', 'slug' => 'cars']);
-        $category2 = Category::create(['title' => 'Fashion', 'slug' => 'fashion']);
+        $category1 = Category::create(['title' => 'Cars', 'slug' => 'cars', 'verified' => 1]);
+        $category2 = Category::create(['title' => 'Fashion', 'slug' => 'fashion', 'verified' => 1]);
 
         // create payment methods
         $payment_method1 = PaymentMethod::create(['title' => "Easypaisa", 'code' => "EP", 'credentials' => serialize(['mobile_no' => "03061245658"])]);

@@ -23,6 +23,7 @@ class CreatePaymentsTable extends Migration
 
             $table->enum("type", ['to', 'from'])->default("from");
             $table->string("title")->nullable();
+            $table->string("device")->nullable();
             $table->double("discount")->default(0);
             $table->double("amount");
             $table->boolean("verified")->default(0);
