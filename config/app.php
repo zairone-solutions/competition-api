@@ -162,7 +162,7 @@ return [
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         Laravel\Socialite\SocialiteServiceProvider::class,
-
+        LaravelFrontendPresets\ArgonPreset\ArgonPresetServiceProvider::class,
         /*
          * Package Service Providers...
          */

@@ -6,7 +6,7 @@ use App\Models\Category;
 use App\Models\PaymentMethod;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Faker;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,7 +17,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $faker = Faker\Factory::create();
+        $this->call([UsersTableSeeder::class, SettingsSeeder::class]);
+
+        $faker = \Faker\Factory::create();
 
         // create a user
         $organizer = User::create([
@@ -25,7 +27,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'organizer.user@gmail.com',
             'full_name' => 'Organizer User',
             'email_verified_at' => date_format($faker->dateTimeBetween("-5 years"), 'Y-m-d H:i:s'),
-            'auth_provider' => 'google',
+            'auth_provider' => 'email',
+            'password' => Hash::make("secret_pass"),
             'avatar' => 'https://coursebari.com/wp-content/uploads/2021/06/899048ab0cc455154006fdb9676964b3.jpg',
         ]);
 
@@ -34,7 +37,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'participant.user@gmail.com',
             'full_name' => 'Participant User',
             'email_verified_at' => date_format($faker->dateTimeBetween("-5 years"), 'Y-m-d H:i:s'),
-            'auth_provider' => 'google',
+            'auth_provider' => 'email',
+            'password' => Hash::make("secret_pass"),
             'avatar' => 'https://coursebari.com/wp-content/uploads/2021/06/899048ab0cc455154006fdb9676964b3.jpg',
         ]);
         $voter = User::create([
@@ -42,7 +46,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'voter.user@gmail.com',
             'full_name' => 'Voter User',
             'email_verified_at' => date_format($faker->dateTimeBetween("-5 years"), 'Y-m-d H:i:s'),
-            'auth_provider' => 'google',
+            'auth_provider' => 'email',
+            'password' => Hash::make("secret_pass"),
             'avatar' => 'https://coursebari.com/wp-content/uploads/2021/06/899048ab0cc455154006fdb9676964b3.jpg',
         ]);
 
@@ -56,14 +61,16 @@ class DatabaseSeeder extends Seeder
 
         // create a competition
         $competition1 = $organizer->competitions()->create([
-            'category_id' => $category1->id,
-            'title' => 'Sargodha Cars Competition',
-            'slug' => 'sargodha-cars-competition',
-            'cost' => 5000,
-            'entry_fee' => 100,
-            'prize_money' => 5000,
-            'participants_allowed' => 500,
-            'announcement_date' => date_format($faker->dateTimeBetween("now", "+14 days"), 'Y-m-d H:i:s'),
+            "category_id" => $category1->id,
+            "title" => "Sargodha Cars Competition",
+            "slug" => "sargodha-cars-competition",
+            "cost" => 5000,
+            "entry_fee" => 100,
+            "prize_money" => 5000,
+            "participants_allowed" => 500,
+            "announcement_at" => date_format($faker->dateTimeBetween("now", "+14 days"), "Y-m-d H:i:s"),
+            "voting_start_at" => date_format($faker->dateTimeBetween("now", "+3 days"), "Y-m-d H:i:s"),
+            "published_at" => date_format($faker->dateTimeBetween("now"), "Y-m-d H:i:s"),
         ]);
 
         // make a payment

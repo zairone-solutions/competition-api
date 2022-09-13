@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -14,7 +15,7 @@ class CategoryController extends BaseController
         $errors = $this->reqValidate($request->all(), $rules, ['title.unique' => "Category exists already."]);
         if ($errors) return $errors;
 
-        auth()->user()->category_suggests()->create(['title' => $request->title, "slug" => str_slug($request->title)]);
+        auth()->user()->category_suggests()->create(['title' => $request->title, "slug" => Str::slug($request->title)]);
 
         return $this->resMsg(['success' => "Category creation request has been sent successfully."]);
     }
@@ -24,7 +25,7 @@ class CategoryController extends BaseController
         if ($request->has("s")) {
             $condition = ['title', 'LIKE', '%' . $request->get("s") . '%'];
         }
-        $cats = Category::where(...$condition)->verified()->get(['id', 'title', 'slug']);
-        return $this->resData($cats);
+        $cats = Category::where(...$condition)->verified()->get();
+        return $this->resData(CategoryResource::collection($cats));
     }
 }

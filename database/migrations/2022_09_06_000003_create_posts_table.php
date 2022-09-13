@@ -20,7 +20,7 @@ class CreatePostsTable extends Migration
 
             $table->text("description")->nullable();
             $table->boolean("hidden")->default(1);
-            $table->timestamp("approved_at")->nullable();
+            $table->dateTime("approved_at")->nullable();
             $table->timestamps();
         });
     }

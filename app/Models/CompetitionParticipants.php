@@ -8,7 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class CompetitionParticipants extends Model
 {
     use HasFactory;
-
+ /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        "participant_id",
+        "competition_id",
+    ];
     // relations
     public function competition()
     {

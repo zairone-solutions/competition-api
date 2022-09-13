@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Resources\AuthUserResource;
 use App\Mail\EmailVerification;
 use App\Mail\ForgetPassword;
 use App\Mail\ResetPasswordSuccess;
@@ -55,7 +56,7 @@ class AuthController extends BaseController
             // auth()->user()->tokens()->delete();
             $token = auth()->user()->createToken('auth_token', $request->get("deviceModel") ?? NULL, [auth()->user()->type]);
 
-            return $this->resData(["user" => $this->userDisplay(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
+            return $this->resData(["user" => AuthUserResource::make(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
         } else {
             return $this->resMsg(['message' => "Invalid verification code!"], 'authentication', 400);
         }
@@ -110,7 +111,7 @@ class AuthController extends BaseController
         $token = auth()->user()->createToken('auth_token', $request->get("deviceModel") ?? NULL, [auth()->user()->type]);
         @Mail::to(auth()->user())->send(new ResetPasswordSuccess());
 
-        return $this->resData(["user" => $this->userDisplay(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
+        return $this->resData(["user" => AuthUserResource::make(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
     }
 
     public function email_login(Request $request)
@@ -142,7 +143,7 @@ class AuthController extends BaseController
         // auth()->user()->tokens()->delete();
         $token = auth()->user()->createToken('auth_token', $request->get("deviceModel") ?? NULL, [auth()->user()->type]);
 
-        return $this->resData(["user" => $this->userDisplay(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
+        return $this->resData(["user" => AuthUserResource::make(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
     }
     public function google_login(Request $request)
     {
@@ -163,7 +164,7 @@ class AuthController extends BaseController
         // auth()->user()->tokens()->delete();
         $token = auth()->user()->createToken('auth_token', $request->get("deviceModel") ?? NULL, [$user->type]);
 
-        return $this->resData(["user" => $this->userDisplay(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
+        return $this->resData(["user" => AuthUserResource::make(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
     }
     public function logout()
     {

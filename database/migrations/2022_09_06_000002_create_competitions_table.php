@@ -20,13 +20,15 @@ class CreateCompetitionsTable extends Migration
             $table->foreignId("category_id")->nullable()->constrained()->onUpdate('cascade')->nullOnDelete();
 
             $table->string("title", 255);
-            $table->string("slug", 500);
+            $table->string("slug", 500)->unique();
             $table->double("cost");
             $table->double("entry_fee");
             $table->double("prize_money");
             $table->integer("participants_allowed");
-            $table->timestamp("announcement_date");
-
+            $table->dateTime("announcement_at");
+            $table->dateTime("voting_start_at")->nullable();
+            $table->dateTime("published_at")->nullable();
+            $table->dateTime("payment_verified_at")->nullable();
             $table->timestamps();
         });
     }

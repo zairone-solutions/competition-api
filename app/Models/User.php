@@ -85,6 +85,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(PostVotes::class, 'voter_id');
     }
+    public function participations()
+    {
+        return $this->hasMany(CompetitionParticipants::class, 'participant_id');
+    }
     public function competition_comments()
     {
         return $this->hasMany(CompetitionComments::class);

@@ -26,8 +26,7 @@ class CreatePaymentsTable extends Migration
             $table->string("device")->nullable();
             $table->double("discount")->default(0);
             $table->double("amount");
-            $table->boolean("verified")->default(0);
-            $table->timestamp("verified_at");
+            $table->dateTime("verified_at")->nullable();
             $table->timestamps();
         });
     }

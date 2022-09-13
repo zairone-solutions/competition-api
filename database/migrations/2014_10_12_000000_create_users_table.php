@@ -21,11 +21,11 @@ class CreateUsersTable extends Migration
             $table->string('password')->nullable();
             $table->string('phone_code')->nullable();
             $table->integer('phone_no')->nullable();
-            $table->enum('type', ['voter', 'organizer', 'participant'])->default("voter");
+            $table->enum('type', ['voter', 'organizer', 'participant', 'admin'])->default("voter");
             $table->double("balance")->default(0);
             $table->text("notification_token")->nullable();
             $table->integer('email_verification_code')->nullable();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->dateTime('email_verified_at')->nullable();
             $table->enum('auth_provider', ['email', 'google', 'facebook'])->default("email");
             $table->text("avatar")->nullable();
 
