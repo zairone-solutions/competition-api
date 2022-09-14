@@ -17,6 +17,7 @@ class CompetitionResource extends JsonResource
         return [
             "id" => $this->id,
             "title" => $this->title,
+            "description" => $this->description,
             "slug" => $this->slug,
             "cost" => $this->cost,
             "entry_fee" => $this->entry_fee,

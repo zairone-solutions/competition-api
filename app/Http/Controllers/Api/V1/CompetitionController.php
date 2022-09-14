@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Resources\CompetitionCommentResource;
 use App\Http\Resources\CompetitionResource;
 use App\Models\Competition;
+use App\Models\CompetitionComments;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -71,6 +73,7 @@ class CompetitionController extends BaseController
                 return $query->where(['id' => $request->category_id, "verified" => 1]);
             }),],
             'title' => ["required", "max:50", "min:3"],
+            'description' => ["nullable", "max:450"],
             'entry_fee' => ["required", "numeric", "min:" . $competition_rules["min_entry_fee"], "max:" . $competition_rules["max_prize_money"]],
             'prize_money' => ["required", "numeric", "min:" . $competition_rules["min_prize_money"], "max:" . $competition_rules["max_prize_money"]],
             'participants_allowed' => ["required", "numeric", "min:" . $competition_rules["min_participants_allowed"], "max:" . $competition_rules["max_participants_allowed"]],
@@ -82,11 +85,11 @@ class CompetitionController extends BaseController
         ]);
         if ($errors) return $errors;
 
-
         $slug_matches = Competition::where("title", $request->title)->count();
         $competition = auth()->user()->competitions()->create([
             "category_id" => $request->category_id,
             "title" => $request->title,
+            "description" => $request->description,
             "slug" => $slug_matches ? Str::slug($request->title) . "-" . ($slug_matches + 1) : Str::slug($request->title),
             "cost" => $this->calculateCompetitionCost($request->participants_allowed),
             "entry_fee" => $request->entry_fee,
@@ -110,6 +113,7 @@ class CompetitionController extends BaseController
                 return $query->where(['id' => $request->category_id, "verified" => 1]);
             }),],
             'title' => ["required", "max:50", "min:3"],
+            'description' => ["nullable", "max:450"],
             'entry_fee' => ["required", "numeric", "min:" . $competition_rules["min_entry_fee"], "max:" . $competition_rules["max_prize_money"]],
             'prize_money' => ["required", "numeric", "min:" . $competition_rules["min_prize_money"], "max:" . $competition_rules["max_prize_money"]],
             'participants_allowed' => ["required", "numeric", "min:" . $competition_rules["min_participants_allowed"], "max:" . $competition_rules["max_participants_allowed"]],
@@ -120,16 +124,16 @@ class CompetitionController extends BaseController
             'category_id.exists' => "Invalid category."
         ]);
         if ($errors) return $errors;
-        if ((strtotime($request->announcement_at) > strtotime("+" . $competition_rules['max_competition_days'] . " days") ||
-                strtotime($request->announcement_at) < strtotime("+" . $competition_rules['min_competition_days'] . " days"))
-            ||  strtotime($request->announcement_at) < (strtotime($request->voting_start_at) + (24 * 60 * 60))
-        ) {
-            return $this->resMsg(["message" => "Invalid announcement date."], "validation", 400);
+
+        // time validations
+        if (strtotime($request->announcement_at) > strtotime("+" . $competition_rules['max_competition_days'] . " days")) {
+            return $this->resMsg(["message" => "Announcement date must be before " . $competition_rules['max_competition_days'] . " days."], "validation", 400);
         }
-        if (
-            strtotime($request->announcement_at) < (strtotime($request->voting_start_at) + (24 * 60 * 60))
-        ) {
-            return $this->resMsg(["message" => "Invalid voting date."], "validation", 400);
+        if (strtotime($request->announcement_at) < strtotime("+" . $competition_rules['min_competition_days'] . " days")) {
+            return $this->resMsg(["message" => "Announcement date must be after " . $competition_rules['min_competition_days'] . " days."], "validation", 400);
+        }
+        if (strtotime($request->voting_start_at) < (strtotime($request->voting_start_at))) {
+            return $this->resMsg(["message" => "Voting date must be after " . $competition_rules['voting_delay_days'] . " days."], "validation", 400);
         }
 
         $slug_matches = Competition::where("title", $request->title)->where("id", "!=", $competition->id)->count();
@@ -137,6 +141,7 @@ class CompetitionController extends BaseController
         $competition->update([
             "category_id" => $request->category_id,
             "title" => $request->title,
+            "description" => $request->description,
             "slug" => $slug_matches ? Str::slug($request->title) . "-" . ($slug_matches + 1) : Str::slug($request->title),
             "cost" => $this->calculateCompetitionCost($request->participants_allowed),
             "entry_fee" => $request->entry_fee,
@@ -149,6 +154,8 @@ class CompetitionController extends BaseController
     }
     public function publish(Request $request, Competition $competition)
     {
+        $competition_rules = $this->getCompetitionRules();
+
         if (auth()->user()->id !== $competition->organizer_id) {
             return $this->resMsg(["message" => "Only organizer can publish a competition."], "authentication", 400);
         }
@@ -156,14 +163,14 @@ class CompetitionController extends BaseController
             return $this->resMsg(["message" => "Payment not verified yet."], "authentication", 400);
         }
         if (auth()->user()->competitions()->where('id', $competition->id)->first()->published_at) {
-            return $this->resMsg(["message" => "Competiton already published."], "authentication", 400);
+            return $this->resMsg(["message" => "Competiton already published."], "validation", 400);
         }
 
-        if (strtotime($competition->voting_start_at) < strtotime('now')) {
-            return $this->resMsg(["message" => "Voting date has expired. Please update to publish."], "validation", 400);
+        if (strtotime($competition->voting_start_at) <= (strtotime('now') + (((int) $competition_rules['voting_delay_days'] + 1) * 24 * 60 * 60))) {
+            return $this->resMsg(["message" => "Voting date must be after " . $competition_rules['voting_delay_days'] . " days. Please update to publish."], "validation", 400);
         }
-        if (strtotime($competition->announcement_at) < strtotime('now')) {
-            return $this->resMsg(["message" => "Announcement date has expired. Please update to publish."], "validation", 400);
+        if (strtotime($competition->announcement_at) <= (strtotime('now') + ((int) $competition_rules['min_competition_days']  * 24 * 60 * 60))) {
+            return $this->resMsg(["message" => "Announcement date must be after " . $competition_rules['min_competition_days'] . " days. Please update to publish."], "validation", 400);
         }
 
         $competition->published_at = date("Y-m-d H:i:s", strtotime("now"));
@@ -184,5 +191,63 @@ class CompetitionController extends BaseController
         $competition->participants()->create(['participant_id' => auth()->user()->id]);
 
         return $this->resMsg(["success" => "You have participated successfully."]);
+    }
+
+    public function comments_all(Request $request, Competition $competition)
+    {
+        if (auth()->user()->id == $competition->organizer_id)
+            $comments = CompetitionCommentResource::collection($competition->comments()->coms()->default()->paginate(15));
+        else
+            $comments = CompetitionCommentResource::collection($competition->comments()->coms()->visible()->default()->paginate(15));
+
+        return $this->resData($comments);
+    }
+    public function comment_replies_all(Request $request, Competition $competition, CompetitionComments $competition_comment)
+    {
+        if (auth()->user()->id == $competition->organizer_id)
+            $replies = CompetitionCommentResource::collection($competition_comment->replies()->default()->paginate(15));
+        else {
+            if ($competition_comment->hidden) {
+                return $this->resMsg(["message" => "Replies of hidden comments can not be shown."], "validation", 400);
+            }
+            $replies = CompetitionCommentResource::collection($competition_comment->replies()->visible()->default()->paginate(15));
+        }
+        return $this->resData($replies);
+    }
+    public function comments_store(Request $request, Competition $competition)
+    {
+        $rules = ['text' => "required|min:1|max:450"];
+        $errors = $this->reqValidate($request->all(), $rules);
+        if ($errors) return $errors;
+
+        $repky = auth()->user()->competition_comments()->create([
+            "competition_id" => $competition->id,
+            "text" => $request->text,
+        ]);
+        return $this->resData(CompetitionCommentResource::make($repky));
+    }
+    public function comment_replies(Request $request, Competition $competition, CompetitionComments $competition_comment)
+    {
+        $rules = ['text' => "required|min:1|max:450"];
+        $errors = $this->reqValidate($request->all(), $rules);
+        if ($errors) return $errors;
+
+        $reply = auth()->user()->competition_comments()->create([
+            "competition_id" => $competition->id,
+            "comment_id" => $competition_comment->id,
+            "type" => "reply",
+            "text" => $request->text,
+        ]);
+        return $this->resData(CompetitionCommentResource::make($reply));
+    }
+    public function comment_update(Request $request, Competition $competition, CompetitionComments $competition_comment)
+    {
+        if (auth()->user()->id !== $competition->organizer_id) {
+            return $this->resMsg(["message" => "Only organizer can update a comment."], "authentication", 400);
+        }
+
+        $competition_comment->update($request->only(["hidden"]));
+
+        return $this->resData(CompetitionCommentResource::make($competition_comment));
     }
 }

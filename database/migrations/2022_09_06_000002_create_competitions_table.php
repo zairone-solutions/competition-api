@@ -20,6 +20,7 @@ class CreateCompetitionsTable extends Migration
             $table->foreignId("category_id")->nullable()->constrained()->onUpdate('cascade')->nullOnDelete();
 
             $table->string("title", 255);
+            $table->text("description")->nullable();
             $table->string("slug", 500)->unique();
             $table->double("cost");
             $table->double("entry_fee");

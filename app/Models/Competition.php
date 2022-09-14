@@ -17,6 +17,7 @@ class Competition extends Model
         "category_id",
         "winner_id",
         "title",
+        "description",
         "slug",
         "cost",
         "entry_fee",
