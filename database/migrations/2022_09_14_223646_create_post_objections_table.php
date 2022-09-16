@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePostImagesTable extends Migration
+class CreatePostObjectionsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,13 @@ class CreatePostImagesTable extends Migration
      */
     public function up()
     {
-        Schema::create('post_images', function (Blueprint $table) {
+        Schema::create('post_objections', function (Blueprint $table) {
             $table->bigIncrements("id");
             $table->foreignId("post_id")->constrained("posts")->cascadeOnUpdate()->cascadeOnDelete();
 
-            $table->text("image");
-            $table->boolean("approved")->default(0);
-            $table->string("mime_type", 50)->default("jpg");
+            $table->text("description")->nullable();
+            $table->boolean("cleared")->default(0);
+            $table->timestamps();
         });
     }
 
@@ -30,6 +30,6 @@ class CreatePostImagesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('post_images');
+        Schema::dropIfExists('post_objections');
     }
 }

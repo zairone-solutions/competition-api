@@ -2,9 +2,8 @@
 
 namespace App\Http\Resources;
 
-class CompetitionCommentResource extends BaseResource
+class PostImageResource extends BaseResource
 {
-
     /**
      * Transform the resource into an array.
      *
@@ -15,11 +14,7 @@ class CompetitionCommentResource extends BaseResource
     {
         return [
             'id' => $this->id,
-            'competition_id' => $this->competition_id,
-            'type' => $this->type,
-            'text' => $this->text,
-            'hidden' => $this->hidden,
-            'date' => $this->time2str($this->created_at),
+            'url' => asset("storage/" . $this->image)
         ];
     }
 }

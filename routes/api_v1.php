@@ -46,6 +46,25 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         Route::post("competitions/{competition}/comments", "CompetitionController@comments_store");
         Route::post("competitions/{competition}/comments/{competition_comment}", "CompetitionController@comment_replies");
         Route::put("competitions/{competition}/comments/{competition_comment}", "CompetitionController@comment_update");
+
+        // Posts
+        Route::get("posts", "PostController@personal");
+        Route::get("posts/{competition}", "PostController@all");
+        Route::post("posts/{competition}", "PostController@store")->middleware("competition_participant");
+        Route::put("posts/{competition}/update/{post}", "PostController@update")->middleware("competition_participant");
+        Route::delete("posts/{competition}/delete_image/{post_image}", "PostController@delete_image")->middleware("competition_participant");
+        Route::post("posts/{competition}/upload_image/{post}", "PostController@upload_image")->middleware("competition_participant");
+
+        Route::put("posts/{competition}/approve/{post}", "PostController@approve")->middleware("competition_organizer");
+        Route::post("posts/{competition}/object/{post}", "PostController@object")->middleware("competition_organizer");
+        Route::post("posts/{competition}/toggle_show/{post}", "PostController@toggle_show")->middleware("competition_organizer");
+
+        Route::post("posts/{competition}/vote/{post}", "PostController@vote")->middleware("post_voter");
+        Route::post("posts/{competition}/report/{post}", "PostController@report")->middleware("post_voter");
+
+        // Organizer
+        Route::get("organizer/reports", "OrganizerController@reports")->middleware(['ability:organizer']);
+        Route::post("organizer/clear_report_toggle/{post_report}", "OrganizerController@clear_report_toggle")->middleware(['ability:organizer']);
     });
     Route::post("test_login", "Controller@test_login");
     Route::get("test", "Controller@test");

@@ -2,9 +2,8 @@
 
 namespace App\Http\Resources;
 
-class CompetitionCommentResource extends BaseResource
+class PostObjectionResource extends BaseResource
 {
-
     /**
      * Transform the resource into an array.
      *
@@ -14,12 +13,10 @@ class CompetitionCommentResource extends BaseResource
     public function toArray($request)
     {
         return [
-            'id' => $this->id,
-            'competition_id' => $this->competition_id,
-            'type' => $this->type,
-            'text' => $this->text,
-            'hidden' => $this->hidden,
-            'date' => $this->time2str($this->created_at),
+            "id" => $this->id,
+            "description" => $this->description,
+            "cleared" => $this->cleared,
+            "date" => date("M d, Y", strtotime($this->created_at)),
         ];
     }
 }

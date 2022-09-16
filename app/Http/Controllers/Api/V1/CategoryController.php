@@ -11,8 +11,8 @@ class CategoryController extends BaseController
 {
     public function request(Request $request)
     {
-        $rules = ['title' => "required|min:3|max:25|unique:categories"];
-        $errors = $this->reqValidate($request->all(), $rules, ['title.unique' => "Category exists already."]);
+        $rules = ['title' => "required|min:3|max:25|unique:categories|bad_word"];
+        $errors = $this->reqValidate($request->all(), $rules, ['title.unique' => "Category exists already.", 'bad_word' => 'The :attribute cannot contain a bad word.']);
         if ($errors) return $errors;
 
         auth()->user()->category_suggests()->create(['title' => $request->title, "slug" => Str::slug($request->title)]);

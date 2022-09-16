@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources;
 
-class CompetitionResource extends BaseResource
+class CompetitionOrganizerResource extends BaseResource
 {
     /**
      * Transform the resource into an array.
@@ -14,10 +14,10 @@ class CompetitionResource extends BaseResource
     {
         $data = [
             "id" => $this->id,
-            "participated" => FALSE,
             "title" => $this->title,
             "description" => $this->description,
             "slug" => $this->slug,
+            "cost" => number_format($this->cost),
             "entry_fee" => number_format($this->entry_fee),
             "prize_money" => number_format($this->prize_money),
             "participations" => $this->participants()->count(),
@@ -31,9 +31,7 @@ class CompetitionResource extends BaseResource
             "organizer" => UserResource::make($this->organizer),
             "winner" => UserResource::make($this->winner),
         ];
-        if ($this->participants()->where("participant_id", auth()->user()->id)->count()) {
-            $data['participated'] = TRUE;
-        }
+
         return $data;
     }
 }
