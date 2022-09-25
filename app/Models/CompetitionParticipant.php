@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class CompetitionParticipants extends Model
+class CompetitionParticipant extends Model
 {
     use HasFactory;
  /**

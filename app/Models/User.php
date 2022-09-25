@@ -66,8 +66,6 @@ class User extends Authenticatable
         return new NewAccessToken($token, $token->getKey() . '|' . $plainTextToken);
     }
 
-
-
     // relations
     public function password_resets()
     {
@@ -83,15 +81,15 @@ class User extends Authenticatable
     }
     public function votes()
     {
-        return $this->hasMany(PostVotes::class, 'voter_id');
+        return $this->hasMany(PostVote::class, 'voter_id');
     }
     public function participations()
     {
-        return $this->hasMany(CompetitionParticipants::class, 'participant_id');
+        return $this->hasMany(CompetitionParticipant::class, 'participant_id');
     }
     public function competition_comments()
     {
-        return $this->hasMany(CompetitionComments::class);
+        return $this->hasMany(CompetitionComment::class);
     }
     public function payments()
     {
@@ -101,8 +99,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(Ledger::class);
     }
+    public function got_reports()
+    {
+        return $this->hasMany(PostReport::class, "organizer_id");
+    }
+    public function reports()
+    {
+        return $this->hasMany(PostReport::class, "reporter_id");
+    }
     public function category_suggests()
     {
         return $this->hasMany(Category::class, "suggest_id");
+    }
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
     }
 }

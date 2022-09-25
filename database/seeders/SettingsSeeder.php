@@ -14,15 +14,21 @@ class SettingsSeeder extends Seeder
      */
     public function run()
     {
-        $setting = Setting::create(['key' => "competition", 'title' => "Competition"]);
-        $setting->children()->create(['key' => 'cost_per_participant', 'rule' => "required|numeric", 'title' => "Cost Per Participant", 'value' => 10]);
-        $setting->children()->create(['key' => 'min_competition_days', 'rule' => "required|numeric", 'title' => "Minimum Competition Days", 'value' => 14]);
-        $setting->children()->create(['key' => 'max_competition_days', 'rule' => "required|numeric", 'title' => "Maximum Competition Days", 'value' => 28]);
-        $setting->children()->create(['key' => 'voting_delay_days', 'rule' => "required|numeric", 'title' => "Voting Delay Days (after publishing)", 'value' => 3]);
-        $setting->children()->create(['key' => 'min_participants_allowed', 'rule' => "required|lte:max_participants_allowed", 'title' => "Minimum Participants Allowed", 'value' => 10]);
-        $setting->children()->create(['key' => 'max_participants_allowed', 'rule' => "required|gte:min_participants_allowed", 'title' => "Maximum Participants Allowed", 'value' => 3000]);
-        $setting->children()->create(['key' => 'min_prize_money', 'rule' => "required|numeric|lte:max_prize_money", 'title' => "Minimum Prize Money", 'value' => 300]);
-        $setting->children()->create(['key' => 'max_prize_money', 'rule' => "required|numeric|gte:min_prize_money", 'title' => "Maximum Prize Money", 'value' => 3000000]);
-        $setting->children()->create(['key' => 'min_entry_fee', 'rule' => "required|numeric|lt:max_prize_money", 'title' => "Minimum Entry Fee", 'value' => 10]);
+        $competition = Setting::create(['key' => "competition", 'title' => "Competition"]);
+        $competition->children()->create(['key' => 'cost_per_participant', 'rule' => "required|numeric", 'title' => "Cost Per Participant", 'value' => 10]);
+        $competition->children()->create(['key' => 'min_competition_days', 'rule' => "required|numeric", 'title' => "Minimum Competition Days", 'value' => 14]);
+        $competition->children()->create(['key' => 'max_competition_days', 'rule' => "required|numeric", 'title' => "Maximum Competition Days", 'value' => 28]);
+        $competition->children()->create(['key' => 'voting_delay_days', 'rule' => "required|numeric", 'title' => "Voting Delay Days (after publishing)", 'value' => 3]);
+        $competition->children()->create(['key' => 'min_participants_allowed', 'rule' => "required|lte:max_participants_allowed", 'title' => "Minimum Participants Allowed", 'value' => 10]);
+        $competition->children()->create(['key' => 'max_participants_allowed', 'rule' => "required|gte:min_participants_allowed", 'title' => "Maximum Participants Allowed", 'value' => 3000]);
+        $competition->children()->create(['key' => 'min_prize_money', 'rule' => "required|numeric|lte:max_prize_money", 'title' => "Minimum Prize Money", 'value' => 300]);
+        $competition->children()->create(['key' => 'max_prize_money', 'rule' => "required|numeric|gte:min_prize_money", 'title' => "Maximum Prize Money", 'value' => 3000000]);
+        $competition->children()->create(['key' => 'min_entry_fee', 'rule' => "required|numeric|lt:max_prize_money", 'title' => "Minimum Entry Fee", 'value' => 10]);
+
+        $post = Setting::create(['key' => "post", 'title' => "Post"]);
+        $post->children()->create(['key' => 'max_image_size', 'rule' => "required|numeric", 'title' => "Max Image Size (MB)", 'value' => 10]);
+        $post->children()->create(['key' => 'no_of_images_allowed', 'rule' => "required|numeric", 'title' => "Allowed Images per post", 'value' => 3]);
+        $post->children()->create(['key' => 'image_resize_width', 'rule' => "required|numeric", 'title' => "Image Resize Width (px)", 'value' => 720]);
+        $post->children()->create(['key' => 'image_resize_height', 'rule' => "required|numeric", 'title' => "Image Resize Height (px)", 'value' => 480]);
     }
 }

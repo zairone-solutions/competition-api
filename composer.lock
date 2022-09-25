@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bcabdd994b3228ccbb1f5c9ce696e28a",
+    "content-hash": "9a35837f04159baddd41fbbe7c93df75",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -117,6 +117,52 @@
                 }
             ],
             "time": "2022-08-10T22:54:19+00:00"
+        },
+        {
+            "name": "codeliter/expo-notification-pusher",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/codeliter/expo-notification-pusher.git",
+                "reference": "342671dadc6389e46e8aae2c2edec079204d6aef"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/codeliter/expo-notification-pusher/zipball/342671dadc6389e46e8aae2c2edec079204d6aef",
+                "reference": "342671dadc6389e46e8aae2c2edec079204d6aef",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "mashape/unirest-php": "^3.0"
+            },
+            "require-dev": {
+                "larapack/dd": "^1.1",
+                "phpunit/phpunit": "^9.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Codeliter\\Tests\\": "tests",
+                    "Codeliter\\ExpoPush\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Abolarin stephen",
+                    "email": "hackzlord@gmail.com"
+                }
+            ],
+            "description": "Send push notifications from your backend to an expo app",
+            "support": {
+                "issues": "https://github.com/codeliter/expo-notification-pusher/issues",
+                "source": "https://github.com/codeliter/expo-notification-pusher/tree/1.0.0"
+            },
+            "time": "2020-06-12T08:17:00+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -960,6 +1006,90 @@
                 }
             ],
             "time": "2022-08-28T14:45:39+00:00"
+        },
+        {
+            "name": "intervention/image",
+            "version": "2.7.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Intervention/image.git",
+                "reference": "04be355f8d6734c826045d02a1079ad658322dad"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Intervention/image/zipball/04be355f8d6734c826045d02a1079ad658322dad",
+                "reference": "04be355f8d6734c826045d02a1079ad658322dad",
+                "shasum": ""
+            },
+            "require": {
+                "ext-fileinfo": "*",
+                "guzzlehttp/psr7": "~1.1 || ^2.0",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "~0.9.2",
+                "phpunit/phpunit": "^4.8 || ^5.7 || ^7.5.15"
+            },
+            "suggest": {
+                "ext-gd": "to use GD library based image processing.",
+                "ext-imagick": "to use Imagick based image processing.",
+                "intervention/imagecache": "Caching extension for the Intervention Image library"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.4-dev"
+                },
+                "laravel": {
+                    "providers": [
+                        "Intervention\\Image\\ImageServiceProvider"
+                    ],
+                    "aliases": {
+                        "Image": "Intervention\\Image\\Facades\\Image"
+                    }
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Intervention\\Image\\": "src/Intervention/Image"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Oliver Vogel",
+                    "email": "oliver@intervention.io",
+                    "homepage": "https://intervention.io/"
+                }
+            ],
+            "description": "Image handling and manipulation library with support for Laravel integration",
+            "homepage": "http://image.intervention.io/",
+            "keywords": [
+                "gd",
+                "image",
+                "imagick",
+                "laravel",
+                "thumbnail",
+                "watermark"
+            ],
+            "support": {
+                "issues": "https://github.com/Intervention/image/issues",
+                "source": "https://github.com/Intervention/image/tree/2.7.2"
+            },
+            "funding": [
+                {
+                    "url": "https://paypal.me/interventionio",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/Intervention",
+                    "type": "github"
+                }
+            ],
+            "time": "2022-05-21T17:30:32+00:00"
         },
         {
             "name": "laravel/framework",
@@ -1872,6 +2002,57 @@
             "time": "2022-04-15T14:02:14+00:00"
         },
         {
+            "name": "mashape/unirest-php",
+            "version": "v3.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Mashape/unirest-php.git",
+                "reference": "842c0f242dfaaf85f16b72e217bf7f7c19ab12cb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Mashape/unirest-php/zipball/842c0f242dfaaf85f16b72e217bf7f7c19ab12cb",
+                "reference": "842c0f242dfaaf85f16b72e217bf7f7c19ab12cb",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "codeclimate/php-test-reporter": "0.1.*",
+                "phpunit/phpunit": "~4.4"
+            },
+            "suggest": {
+                "ext-json": "Allows using JSON Bodies for sending and parsing requests"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Unirest\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Unirest PHP",
+            "homepage": "https://github.com/Mashape/unirest-php",
+            "keywords": [
+                "client",
+                "curl",
+                "http",
+                "https",
+                "rest"
+            ],
+            "support": {
+                "email": "opensource@mashape.com",
+                "issues": "https://github.com/Mashape/unirest-php/issues",
+                "source": "https://github.com/Mashape/unirest-php/tree/master"
+            },
+            "time": "2016-08-11T17:49:21+00:00"
+        },
+        {
             "name": "monolog/monolog",
             "version": "2.8.0",
             "source": {
@@ -2342,6 +2523,69 @@
                 "source": "https://github.com/opis/closure/tree/3.6.3"
             },
             "time": "2022-01-27T09:35:39+00:00"
+        },
+        {
+            "name": "patoui/laravel-bad-word",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/patoui/laravel-bad-word.git",
+                "reference": "03b53814a9703f9be0fef0dfcaaede362b979b5d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/patoui/laravel-bad-word/zipball/03b53814a9703f9be0fef0dfcaaede362b979b5d",
+                "reference": "03b53814a9703f9be0fef0dfcaaede362b979b5d",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/validation": "^5.0|^6.0|^7.0|^8.0",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "orchestra/testbench": "~3.4",
+                "phpunit/phpunit": "~5.7"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Patoui\\LaravelBadWord\\BadWordServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Patoui\\LaravelBadWord\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Patrique Ouimet",
+                    "email": "patrique.ouimet@gmail.com",
+                    "homepage": "https://patriqueouimet.ca",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Laravel bad word validation rule",
+            "keywords": [
+                "bad",
+                "laravel",
+                "patoui",
+                "profanity",
+                "validation",
+                "word"
+            ],
+            "support": {
+                "issues": "https://github.com/patoui/laravel-bad-word/issues",
+                "source": "https://github.com/patoui/laravel-bad-word/tree/master"
+            },
+            "time": "2022-05-03T17:55:22+00:00"
         },
         {
             "name": "phpoption/phpoption",

@@ -16,6 +16,7 @@ class Competition extends Model
     protected $fillable = [
         "category_id",
         "winner_id",
+        "winner_post",
         "title",
         "description",
         "slug",
@@ -40,9 +41,13 @@ class Competition extends Model
     {
         return $this->belongsTo(User::class, "organizer_id");
     }
+    public function posts()
+    {
+        return $this->hasMany(Post::class);
+    }
     public function votes()
     {
-        return $this->hasMany(PostVotes::class);
+        return $this->hasMany(PostVote::class);
     }
     public function category()
     {
@@ -50,10 +55,10 @@ class Competition extends Model
     }
     public function participants()
     {
-        return $this->hasMany(CompetitionParticipants::class, "competition_id");
+        return $this->hasMany(CompetitionParticipant::class, "competition_id");
     }
     public function comments()
     {
-        return $this->hasMany(CompetitionComments::class);
+        return $this->hasMany(CompetitionComment::class);
     }
 }

@@ -23,7 +23,8 @@ class CreateCompetitionsTable extends Migration
             $table->text("description")->nullable();
             $table->string("slug", 500)->unique();
             $table->double("cost");
-            $table->double("entry_fee");
+            $table->double("entry_fee")->default(0);
+            $table->boolean("paid")->default(1);
             $table->double("prize_money");
             $table->integer("participants_allowed");
             $table->dateTime("announcement_at");

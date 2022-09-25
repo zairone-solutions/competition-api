@@ -14,8 +14,11 @@ class Authenticate extends Middleware
      */
     protected function redirectTo($request)
     {
-        if (! $request->expectsJson()) {
-            return route('login');
+        if (in_array('api', $request->route()->getAction('middleware'))) {
+            abort(response()->json(['error_type' => "authorization", "message" => [
+                "error" => "Please provide a valid token."
+            ]]));
         }
+        return route('login');
     }
 }

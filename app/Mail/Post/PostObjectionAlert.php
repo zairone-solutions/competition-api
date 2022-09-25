@@ -1,25 +1,24 @@
 <?php
 
-namespace App\Mail;
+namespace App\Mail\Post;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class ForgetPassword extends Mailable
+class PostObjectionAlert extends Mailable
 {
     use Queueable, SerializesModels;
-    private $content;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($content)
+    public function __construct($data)
     {
-        $this->content = $content;
+        $this->data = $data;
     }
 
     /**
@@ -29,6 +28,6 @@ class ForgetPassword extends Mailable
      */
     public function build()
     {
-        return $this->subject($this->content['code'] . " ― Password reset code")->markdown('emails.forget-password')->with('content', $this->content);
+        return $this->subject("Post Objection Alert!")->markdown('emails.post.objection')->with('data', $this->data);
     }
 }

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Resources\AuthUserResource;
-use App\Mail\EmailVerification;
-use App\Mail\ForgetPassword;
-use App\Mail\ResetPasswordSuccess;
+use App\Mail\Auth\EmailVerification;
+use App\Mail\Auth\ForgetPassword;
+use App\Mail\Auth\ResetPasswordSuccess;
 use App\Models\User;
 use App\Rules\IdentityRule;
 use DateTime;
@@ -58,7 +58,7 @@ class AuthController extends BaseController
 
             return $this->resData(["user" => AuthUserResource::make(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
         } else {
-            return $this->resMsg(['message' => "Invalid verification code!"], 'authentication', 400);
+            return $this->resMsg(['error' => "Invalid verification code!"], 'authentication', 400);
         }
     }
     public function forget_password(Request $request)
@@ -78,9 +78,9 @@ class AuthController extends BaseController
             $token = $user->createToken('forget_password', $request->get("deviceModel") ?? NULL, ["forget-password"]);
             @Mail::to($user)->send(new ForgetPassword(['code' => $password_reset->code]));
 
-            return $this->resData(['message' => "An email has been sent to " . $user->email . ".", 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
+            return $this->resData(['error' => "An email has been sent to " . $user->email . ".", 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
         } else {
-            return $this->resMsg(['message' => "No user found with the provided credentials."], 'authentication', 400);
+            return $this->resMsg(['error' => "No user found with the provided credentials."], 'authentication', 400);
         }
     }
 
@@ -94,9 +94,9 @@ class AuthController extends BaseController
 
             $token = auth()->user()->createToken('reset_password', $request->get("deviceModel") ?? NULL, ["reset-password"]);
 
-            return $this->resData(['message' => "You can reset your password.", 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
+            return $this->resData(['error' => "You can reset your password.", 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
         } else {
-            return $this->resMsg(['message' => "Invalid verification code!"], 'authentication', 400);
+            return $this->resMsg(['error' => "Invalid verification code!"], 'authentication', 400);
         }
     }
 
@@ -109,6 +109,8 @@ class AuthController extends BaseController
         auth()->user()->update(['password' => Hash::make($request->password)]);
         auth()->user()->tokens()->delete();
         $token = auth()->user()->createToken('auth_token', $request->get("deviceModel") ?? NULL, [auth()->user()->type]);
+
+        // Email
         @Mail::to(auth()->user())->send(new ResetPasswordSuccess());
 
         return $this->resData(["user" => AuthUserResource::make(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
@@ -128,7 +130,7 @@ class AuthController extends BaseController
         $credentials['password'] = $request->password;
 
         if (!Auth::once($credentials)) {
-            return $this->resMsg(['message' => "Invalid login credentials!"], 'authentication', 400);
+            return $this->resMsg(['error' => "Invalid login credentials!"], 'authentication', 400);
         }
         if (!auth()->user()->email_verified_at) {
             $email_code = rand(11111, 99999);
@@ -138,7 +140,7 @@ class AuthController extends BaseController
 
             @Mail::to(auth()->user())->send(new EmailVerification(['code' => $email_code]));
 
-            return $this->resMsg(['message' => "Please verify you email to continue."], 'verification', 400);
+            return $this->resMsg(['error' => "Please verify you email to continue."], 'verification', 400);
         }
         // auth()->user()->tokens()->delete();
         $token = auth()->user()->createToken('auth_token', $request->get("deviceModel") ?? NULL, [auth()->user()->type]);
@@ -170,8 +172,18 @@ class AuthController extends BaseController
     {
         if (auth()->check()) {
             auth()->user()->currentAccessToken()->delete();
+            auth()->user()->update(['notification_token' => NULL]);
             return $this->resMsg(['success' => "User logout successfully"]);
         }
         return $this->resMsg(['error' => "Unauthorized!"], "authentication", 401);
+    }
+    public function set_notification_token(Request $request)
+    {
+        $rules = ['notification_token' => "required"];
+        $errors = $this->reqValidate($request->all(), $rules, ['notification_token.required' => "Notification token is missing."]);
+        if ($errors) return $errors;
+
+        auth()->user()->update(['notification_token' => $request->notification_token]);
+        return $this->resMsg(['success' => "Notification token set successfully!"]);
     }
 }

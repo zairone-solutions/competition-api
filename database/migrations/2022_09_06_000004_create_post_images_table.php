@@ -18,6 +18,8 @@ class CreatePostImagesTable extends Migration
             $table->foreignId("post_id")->constrained("posts")->cascadeOnUpdate()->cascadeOnDelete();
 
             $table->text("image");
+            $table->boolean("approved")->default(0);
+            $table->string("mime_type", 50)->default("jpg");
         });
     }
 

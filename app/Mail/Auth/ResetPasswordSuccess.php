@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Mail;
+namespace App\Mail\Auth;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,6 +28,6 @@ class ResetPasswordSuccess extends Mailable
      */
     public function build()
     {
-        return $this->markdown('emails.reset-password-success');
+        return $this->subject("Password Reset Successfully!")->markdown('emails.auth.reset-password-success');
     }
 }
