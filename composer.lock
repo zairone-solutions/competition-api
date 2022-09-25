@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c5b9fe17143c24965678140337c61696",
+    "content-hash": "9a35837f04159baddd41fbbe7c93df75",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -117,6 +117,52 @@
                 }
             ],
             "time": "2022-08-10T22:54:19+00:00"
+        },
+        {
+            "name": "codeliter/expo-notification-pusher",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/codeliter/expo-notification-pusher.git",
+                "reference": "342671dadc6389e46e8aae2c2edec079204d6aef"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/codeliter/expo-notification-pusher/zipball/342671dadc6389e46e8aae2c2edec079204d6aef",
+                "reference": "342671dadc6389e46e8aae2c2edec079204d6aef",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "mashape/unirest-php": "^3.0"
+            },
+            "require-dev": {
+                "larapack/dd": "^1.1",
+                "phpunit/phpunit": "^9.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Codeliter\\Tests\\": "tests",
+                    "Codeliter\\ExpoPush\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Abolarin stephen",
+                    "email": "hackzlord@gmail.com"
+                }
+            ],
+            "description": "Send push notifications from your backend to an expo app",
+            "support": {
+                "issues": "https://github.com/codeliter/expo-notification-pusher/issues",
+                "source": "https://github.com/codeliter/expo-notification-pusher/tree/1.0.0"
+            },
+            "time": "2020-06-12T08:17:00+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -1954,6 +2000,57 @@
                 "source": "https://github.com/thephpleague/oauth1-client/tree/v1.10.1"
             },
             "time": "2022-04-15T14:02:14+00:00"
+        },
+        {
+            "name": "mashape/unirest-php",
+            "version": "v3.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Mashape/unirest-php.git",
+                "reference": "842c0f242dfaaf85f16b72e217bf7f7c19ab12cb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Mashape/unirest-php/zipball/842c0f242dfaaf85f16b72e217bf7f7c19ab12cb",
+                "reference": "842c0f242dfaaf85f16b72e217bf7f7c19ab12cb",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "codeclimate/php-test-reporter": "0.1.*",
+                "phpunit/phpunit": "~4.4"
+            },
+            "suggest": {
+                "ext-json": "Allows using JSON Bodies for sending and parsing requests"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Unirest\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Unirest PHP",
+            "homepage": "https://github.com/Mashape/unirest-php",
+            "keywords": [
+                "client",
+                "curl",
+                "http",
+                "https",
+                "rest"
+            ],
+            "support": {
+                "email": "opensource@mashape.com",
+                "issues": "https://github.com/Mashape/unirest-php/issues",
+                "source": "https://github.com/Mashape/unirest-php/tree/master"
+            },
+            "time": "2016-08-11T17:49:21+00:00"
         },
         {
             "name": "monolog/monolog",

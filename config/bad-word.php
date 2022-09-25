@@ -578,7 +578,6 @@ return [
         'Dumbcunt',
         'dumbfuck',
         'dumbshit',
-        'dummy',
         'dumshit',
         'dvda',
         'dyke',

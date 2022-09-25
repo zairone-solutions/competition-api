@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Resources\AuthUserResource;
-use App\Mail\EmailVerification;
-use App\Mail\ForgetPassword;
-use App\Mail\ResetPasswordSuccess;
+use App\Mail\Auth\EmailVerification;
+use App\Mail\Auth\ForgetPassword;
+use App\Mail\Auth\ResetPasswordSuccess;
 use App\Models\User;
 use App\Rules\IdentityRule;
 use DateTime;
@@ -109,6 +109,8 @@ class AuthController extends BaseController
         auth()->user()->update(['password' => Hash::make($request->password)]);
         auth()->user()->tokens()->delete();
         $token = auth()->user()->createToken('auth_token', $request->get("deviceModel") ?? NULL, [auth()->user()->type]);
+
+        // Email
         @Mail::to(auth()->user())->send(new ResetPasswordSuccess());
 
         return $this->resData(["user" => AuthUserResource::make(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
@@ -170,8 +172,18 @@ class AuthController extends BaseController
     {
         if (auth()->check()) {
             auth()->user()->currentAccessToken()->delete();
+            auth()->user()->update(['notification_token' => NULL]);
             return $this->resMsg(['success' => "User logout successfully"]);
         }
         return $this->resMsg(['error' => "Unauthorized!"], "authentication", 401);
+    }
+    public function set_notification_token(Request $request)
+    {
+        $rules = ['notification_token' => "required"];
+        $errors = $this->reqValidate($request->all(), $rules, ['notification_token.required' => "Notification token is missing."]);
+        if ($errors) return $errors;
+
+        auth()->user()->update(['notification_token' => $request->notification_token]);
+        return $this->resMsg(['success' => "Notification token set successfully!"]);
     }
 }

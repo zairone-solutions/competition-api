@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Mail;
+namespace App\Mail\Auth;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,6 +29,6 @@ class EmailVerification extends Mailable
      */
     public function build()
     {
-        return $this->subject($this->content['code'] . " ― Email verification code")->markdown('emails.email-verification')->with('content', $this->content);
+        return $this->subject($this->content['code'] . " ― Email verification code")->markdown('emails.auth.email-verification')->with('content', $this->content);
     }
 }

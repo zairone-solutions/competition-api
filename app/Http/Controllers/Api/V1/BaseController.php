@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Models\Notification;
 use App\Models\User;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Codeliter\ExpoPush\Expo\PushNotification;
 
 class BaseController extends Controller
 {
@@ -44,5 +46,18 @@ class BaseController extends Controller
         if ($validator->fails()) {
             return $this->resMsg($validator->errors(), 'validation', 400);
         }
+    }
+
+    public function triggerNotification($user_id, $token, $title, $for = "", $description = "", $data = array(), $push = "push")
+    {
+        try {
+            Notification::create(["user_id" => $user_id, "title" => $title, "description" => $description, "for" => $for, "data" => json_encode($data)]);
+            if ($token && $push == "push") PushNotification::send([$token], $title, $description, "");
+        } catch (\Throwable $th) {
+        }
+    }
+    public function cName($competition_name)
+    {
+        return "#" . $competition_name;
     }
 }

@@ -10,11 +10,16 @@ use App\Http\Resources\PostOrganizerResource;
 use App\Http\Resources\PostReportResource;
 use App\Http\Resources\PostResource;
 use App\Http\Resources\PostVoterResource;
+use App\Mail\Post\PostApproveAlert;
+use App\Mail\Post\PostObjectionAlert;
+use App\Mail\Post\PostReportAlert;
+use App\Mail\Post\PostVoteAlert;
 use App\Models\Competition;
 use App\Models\Post;
 use App\Models\PostImage;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Image;
 
@@ -58,6 +63,7 @@ class PostController extends BaseController
             'image.*' => ["image", "mimes:jpeg,png,jpg", "max:" . ((int) $post_rules['max_image_size'] * 1024)],
         ];
         $errors = $this->reqValidate($request->all(), $rules, [
+            'bad_word' => 'The :attribute cannot contain any inappropriate word.',
             "image.size" => "You can only upload " . $post_rules['no_of_images_allowed'] . " images.",
             "image.*.image" => "Please upload a valid image.",
             "image.*.mimes" => "The image must be a file of type: jpeg, png, jpg.",
@@ -94,6 +100,7 @@ class PostController extends BaseController
             // 'image.*' => ["nullable", "image", "mimes:jpeg,png,jpg", "max:" . ((int) $post_rules['max_image_size'] * 1024)],
         ];
         $errors = $this->reqValidate($request->all(), $rules, [
+            'bad_word' => 'The :attribute cannot contain any inappropriate word.',
             // "image.size" => "You can only upload 3 images.",
             // "image.*.image" => "Please upload a valid image.",
             // "image.*.mimes" => "The image must be a file of type: jpeg, png, jpg.",
@@ -163,44 +170,56 @@ class PostController extends BaseController
     {
 
         $post->update(['approved_at' => date("Y-m-d H:i:s")]);
-        $post->objection->update(['cleared' => 1]);
+        if ($post->objection) $post->objection->update(['cleared' => 1]);
 
-        // Email
+        // Email & Notifications
+        @Mail::to($post->user)->send(new PostApproveAlert(['organizer' => $competition->organizer, 'competition' => $competition]));
+        $this->triggerNotification($post->user->id, $post->user->notification_token, "Post Approved!", 'approved', "Your post has been approved by the organizer of " . $this->cName($competition->slug), ['id' => $post->id]);
 
-        return $this->resMsg(PostOrganizerResource::make($post));
+        return $this->resData(PostOrganizerResource::make($post));
     }
     public function toggle_show(Request $request, Competition $competition, Post $post)
     {
 
         $post->update(['hidden' => !$post->hidden]);
 
-        return $this->resMsg(PostOrganizerResource::make($post));
+        return $this->resData(PostOrganizerResource::make($post));
     }
     public function object(Request $request, Competition $competition, Post $post)
     {
+        if (strtotime($competition->voting_start_at) < time()) {
+            return $this->resMsg(["error" => "Objections can only be made before the voting starts."], "validation", 400);
+        }
         $rules = ["description" => ["required", "min:6", "max:450", "bad_word"]];
-        $errors = $this->reqValidate($request->all(), $rules, ['description.required' => "You must provide the reason."]);
+        $errors = $this->reqValidate($request->all(), $rules, ['description.required' => "You must provide the reason.", 'bad_word' => 'The :attribute cannot contain any inappropriate word.',]);
         if ($errors) return $errors;
 
         $post->update(['approved_at' => NULL]);
         if ($post->objection) $post->objection->update(['description' => $request->description, 'cleared' => 0]);
         else $post->objection()->create(['description' => $request->description, 'cleared' => 0]);
 
-        // Email
+        // Email & Notifications
+        @Mail::to($post->user)->send(new PostObjectionAlert(['objection' => $post->objection, 'competition' => $competition]));
+        $this->triggerNotification($post->user->id, $post->user->notification_token, "Post objected!", 'objection', $this->cName($competition->slug) . " organizer has put an objection on your post.", ['id' => $post->id]);
 
-        return $this->resMsg(PostObjectionResource::make($post->objection));
+        return $this->resData(PostObjectionResource::make($post->objection));
     }
     public function vote(Request $request, Competition $competition, Post $post)
     {
         if (auth()->user()->votes()->where("competition_id", $competition->id)->count()) {
             return $this->resMsg(["error" => "Your vote has already been casted."], "authentication", 400);
         }
+        if (strtotime($competition->announcement_at) < time()) {
+            return $this->resMsg(["error" => "Competition already announced!"], "validation", 400);
+        }
 
-        $post->votes()->create(['competition_id' => $competition->id, "voter_id" => auth()->user()->id]);
+        $vote = $post->votes()->create(['competition_id' => $competition->id, "voter_id" => auth()->user()->id]);
 
-        // Email
+        // Email & Notification
+        @Mail::to($post->user)->send(new PostVoteAlert(['organizer' => $competition->organizer, 'competition' => $competition, 'vote' => $vote]));
+        $this->triggerNotification($post->user->id, $post->user->notification_token, "Vote casted!", 'voted', "Your voted in " . $this->cName($competition->slug), ['id' => $post->id], NULL);
 
-        return $this->resMsg(PostVoterResource::make($post));
+        return $this->resData(PostVoterResource::make($post));
     }
     public function report(Request $request, Competition $competition, Post $post)
     {
@@ -214,8 +233,10 @@ class PostController extends BaseController
 
         $report = $post->reports()->create(['reporter_id' => auth()->user()->id, 'organizer_id' => $competition->organizer->id, 'description' => $request->description]);
 
-        // Email
+        // Email & Notifications
+        @Mail::to($post->user)->send(new PostReportAlert(['report' => $report, 'competition' => $post->competition, 'user' => auth()->user()]));
+        $this->triggerNotification($post->user->id, $post->user->notification_token, "Post Reported!", 'reported', auth()->user()->username . " has reported a post in " .  $this->cName($competition->slug) . ".", ['id' => $report->id]);
 
-        return $this->resMsg(PostReportResource::make($report));
+        return $this->resData(PostReportResource::make($report));
     }
 }

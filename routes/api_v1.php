@@ -29,6 +29,7 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         Route::post("verify_email", "AuthController@verify_email")->middleware(['ability:verify-email']);
         Route::post("verify_forget_password", "AuthController@verify_forget_password")->middleware(['ability:forget-password']);
         Route::post("reset_password", "AuthController@reset_password")->middleware(['ability:reset-password']);
+        Route::post("set_notification_token", "AuthController@set_notification_token");
 
         // Categories
         Route::post("categories", "CategoryController@request");
@@ -76,6 +77,6 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
     Route::post("forget_password", "AuthController@forget_password");
 
     Route::get("email_template", function () {
-        return new \App\Mail\EmailVerification(["code" => 59658]);
+        return new \App\Mail\Competition\CompetitionPublished(\App\Models\Competition::find(1));
     });
 });
