@@ -23,7 +23,7 @@ class SettingsSeeder extends Seeder
         $competition->children()->create(['key' => 'max_participants_allowed', 'rule' => "required|gte:min_participants_allowed", 'title' => "Maximum Participants Allowed", 'value' => 3000]);
         $competition->children()->create(['key' => 'min_prize_money', 'rule' => "required|numeric|lte:max_prize_money", 'title' => "Minimum Prize Money", 'value' => 300]);
         $competition->children()->create(['key' => 'max_prize_money', 'rule' => "required|numeric|gte:min_prize_money", 'title' => "Maximum Prize Money", 'value' => 3000000]);
-        $competition->children()->create(['key' => 'min_entry_fee', 'rule' => "required|numeric|lt:max_prize_money", 'title' => "Minimum Entry Fee", 'value' => 10]);
+        $competition->children()->create(['key' => 'min_entry_fee', 'rule' => "required|numeric|lt:max_prize_money", 'title' => "Minimum Entry Fee", 'value' => 0]);
 
         $post = Setting::create(['key' => "post", 'title' => "Post"]);
         $post->children()->create(['key' => 'max_image_size', 'rule' => "required|numeric", 'title' => "Max Image Size (MB)", 'value' => 10]);
