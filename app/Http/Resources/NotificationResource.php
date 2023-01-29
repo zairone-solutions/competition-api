@@ -17,7 +17,7 @@ class NotificationResource extends BaseResource
             'title' => $this->title,
             'description' => $this->description,
             'read' => $this->read,
-            'for' => $this->for,
+            'usedfor' => $this->for,
             'data' => $this->data,
             'date' => $this->time2str($this->created_at)
         ];
