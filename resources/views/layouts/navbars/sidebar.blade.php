@@ -7,7 +7,7 @@
         </button>
         <!-- Brand -->
         <a class="navbar-brand pt-0" href="{{ route('setting.edit') }}">
-            <h3 style="font-size: 2rem">{{ env('APP_NAME') }}</h3>
+            <h3 style="font-size: 2rem"><img src="{{ asset("assets/admin/img/logo.png") }}"  class="mr-2" width="40px" alt="">{{ Str::lower(env('APP_NAME')) }}</h3>
 
         </a>
         <!-- User -->
