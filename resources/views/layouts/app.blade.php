@@ -8,9 +8,9 @@
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Argon Dashboard') }}</title>
+    <title>{{ $title ?? '' }}</title>
     <!-- Favicon -->
-    <link href="{{ asset('argon') }}/img/brand/favicon.png" rel="icon" type="image/png">
+    <link href="{{ asset('assets/admin/img/square-icon.png') }}" rel="icon" type="image/png">
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet">
     <!-- Extra details for Live View on GitHub Pages -->
@@ -24,10 +24,10 @@
 
 <body class="{{ $class ?? '' }}">
     @auth()
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-        @csrf
-    </form>
-    @include('layouts.navbars.sidebar')
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+        @include('layouts.navbars.sidebar')
     @endauth
 
     <div class="main-content">
@@ -36,7 +36,7 @@
     </div>
 
     @guest()
-    @include('layouts.footers.guest')
+        @include('layouts.footers.guest')
     @endguest
 
     <script src="{{ asset('argon') }}/vendor/jquery/dist/jquery.min.js"></script>
