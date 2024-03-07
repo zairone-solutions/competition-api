@@ -25,6 +25,7 @@ class CreateUsersTable extends Migration
             $table->double("balance")->default(0);
             $table->text("notification_token")->nullable();
             $table->integer('email_verification_code')->nullable();
+            $table->dateTime('email_verification_code_at')->nullable();
             $table->dateTime('email_verified_at')->nullable();
             $table->enum('auth_provider', ['email', 'google', 'facebook'])->default("email");
             $table->text("avatar")->nullable();
