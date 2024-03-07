@@ -30,6 +30,7 @@ class User extends Authenticatable
         'balance',
         'notification_token',
         'email_verification_code',
+        'email_verification_code_at',
         'email_verified_at',
         'auth_provider',
         'avatar',
@@ -65,7 +66,11 @@ class User extends Authenticatable
 
         return new NewAccessToken($token, $token->getKey() . '|' . $plainTextToken);
     }
-
+    // scopes
+    function scopeEmail()
+    {
+        return $this->where("auth_provider", "email");
+    }
     // relations
     public function password_resets()
     {

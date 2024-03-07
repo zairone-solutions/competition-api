@@ -19,6 +19,7 @@ class EmailVerification extends Mailable
      */
     public function __construct($content)
     {
+        $content["title"] = "Email Verification";
         $this->content = $content;
     }
 

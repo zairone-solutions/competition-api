@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\SendRegisterEmail;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -12,6 +13,11 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+Route::get('/queuejob', function () {
+    SendRegisterEmail::dispatch();
+    echo "Email sent!";
+});
 
 Route::get('/', function () {
     return view('welcome');

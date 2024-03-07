@@ -37,5 +37,12 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+        $this->renderable(function (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'error_type' => 'authorization', 'messages' => 'Invalid token ability.'
+                ], 401);
+            }
+        });
     }
 }
