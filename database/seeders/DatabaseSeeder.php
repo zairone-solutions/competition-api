@@ -123,11 +123,11 @@ class DatabaseSeeder extends Seeder
         $voter->votes()->create(['competition_id' => $competition1->id, 'post_id' => $post1->id,]);
 
         // competition has a discussion
-        $commemt1 = $voter->competition_comments()->create(["text" => "I have a query about this competition!", 'competition_id' => $competition1->id]);
-        $commemt1->replies()->create(["text" => "Yes, you can ask..", 'user_id' => $organizer->id, "type" => "reply", 'competition_id' => $competition1->id]);
-        $commemt1->replies()->create(["text" => "Nothing.", 'user_id' => $voter->id, "type" => "reply", 'competition_id' => $competition1->id]);
+        $comment1 = $voter->competition_comments()->create(["text" => "I have a query about this competition!", 'competition_id' => $competition1->id]);
+        $comment1->replies()->create(["text" => "Yes, you can ask..", 'user_id' => $organizer->id, "type" => "reply", 'competition_id' => $competition1->id]);
+        $comment1->replies()->create(["text" => "Nothing.", 'user_id' => $voter->id, "type" => "reply", 'competition_id' => $competition1->id]);
 
-        $commemt2 = $participant->competition_comments()->create(["text" => "Guys! come on vote me", 'competition_id' => $competition1->id]);
-        $commemt2->replies()->create(["text" => "Good luck for he voting", 'user_id' => $organizer->id, "type" => "reply", 'competition_id' => $competition1->id]);
+        $comment2 = $participant->competition_comments()->create(["text" => "Guys! come on vote me", 'competition_id' => $competition1->id]);
+        $comment2->replies()->create(["text" => "Good luck for he voting", 'user_id' => $organizer->id, "type" => "reply", 'competition_id' => $competition1->id]);
     }
 }
