@@ -85,3 +85,6 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         return new \App\Mail\Competition\CompetitionPublished(\App\Models\Competition::find(1));
     });
 });
+
+Route::post("aws_test_upload", "\App\Http\Controllers\Controller@aws_test_upload");
+Route::post("aws_test_delete", "\App\Http\Controllers\Controller@aws_test_delete");
