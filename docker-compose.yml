@@ -1,0 +1,124 @@
+version: "3"
+services:
+  #PHP Service
+  uniquo-app:
+    build:
+      args:
+        user: alinaqi2000
+        uid: 1000
+      context: .
+      dockerfile: application/Dockerfile
+    image: alinaqi2000/php
+    container_name: uniquo-app
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: uniquo-app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./application:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - uniquo-app-network
+
+  #Nginx Service
+  uniquo-server:
+    image: nginx:alpine
+    container_name: uniquo-server
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8000:80"
+      - "443:443"
+    volumes:
+      - ./application:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./nginx-logs:/var/log/nginx
+    networks:
+      - uniquo-app-network
+
+  #MySQL Service
+  uniquo-db:
+    image: mysql:latest
+    container_name: uniquo-db
+    restart: always
+    platform: linux/x86_64
+    # tty: true
+    # cpu_quota: 5000
+    # mem_limit: 500MB
+    ports:
+      - "3306:3306"
+
+    env_file: application/.env
+    environment:
+      MYSQL_DATABASE: "${DB_DATABASE}"
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_USER: "${DB_USERNAME}"
+      MYSQL_PASS: "${DB_PASSWORD}"
+    volumes:
+      - db_data:/var/lib/mysql/
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - uniquo-app-network
+
+  # Redis Service
+  uniquo-redis:
+    image: redis:latest
+    container_name: uniquo-redis
+    restart: always
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - uniquo-app-network
+
+  # phpMyAdmin Service
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: uniquo-phpmyadmin
+    restart: always
+    ports:
+      - "8001:80"
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: uniquo-db
+      PMA_USER: "${DB_USERNAME}"
+      PMA_PASSWORD: "${DB_PASSWORD}"
+    networks:
+      - uniquo-app-network
+  # Horizon Service
+  horizon:
+    build:
+      args:
+        user: alinaqi2000
+        uid: 1000
+      context: .
+      dockerfile: application/Dockerfile
+    container_name: uniquo-horizon
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      - uniquo-db
+    environment:
+      SERVICE_NAME: uniquo-horizon
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./application:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    command: php artisan horizon
+    networks:
+      - uniquo-app-network
+
+#Docker Networks
+networks:
+  uniquo-app-network:
+    driver: bridge
+#Volumes
+volumes:
+  db_data:
+    driver: local
+  redis_data:
+    driver: local
