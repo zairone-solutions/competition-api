@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Jobs\SendRegisterEmail;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -88,3 +88,12 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
 
 Route::post("aws_test_upload", "\App\Http\Controllers\Controller@aws_test_upload");
 Route::post("aws_test_delete", "\App\Http\Controllers\Controller@aws_test_delete");
+
+Route::get('/queue_job', function () {
+    try {
+        SendRegisterEmail::dispatch();
+        echo "Email sent!";
+    } catch (\Throwable $th) {
+        echo $th->getMessage();
+    }
+});
