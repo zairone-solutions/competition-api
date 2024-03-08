@@ -18,6 +18,7 @@ services:
     working_dir: /var/www
     volumes:
       - ./application:/var/www
+      - ./.env:/var/www/.env
       - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
       - uniquo-app-network
@@ -49,8 +50,6 @@ services:
     # mem_limit: 500MB
     ports:
       - "3306:3306"
-
-    env_file: application/.env
     environment:
       MYSQL_DATABASE: "${DB_DATABASE}"
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
@@ -88,6 +87,7 @@ services:
       PMA_PASSWORD: "${DB_PASSWORD}"
     networks:
       - uniquo-app-network
+      
   # Horizon Service
   horizon:
     build:
@@ -107,6 +107,7 @@ services:
     working_dir: /var/www
     volumes:
       - ./application:/var/www
+      - ./.env:/var/www/.env
       - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
     command: php artisan horizon
     networks:
