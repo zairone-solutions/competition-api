@@ -4,7 +4,7 @@ services:
   uniquo-app:
     build:
       args:
-        user: alinaqi2000
+        user: ${DOCKER_SYSTEM_USER}
         uid: 1000
       context: .
       dockerfile: application/Dockerfile
@@ -92,7 +92,7 @@ services:
   horizon:
     build:
       args:
-        user: alinaqi2000
+        user: ${DOCKER_SYSTEM_USER}
         uid: 1000
       context: .
       dockerfile: application/Dockerfile
