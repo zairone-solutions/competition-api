@@ -1,7 +1,7 @@
 pipeline {
     agent any
     stages {
-        stage("Verify tooling") {
+        stage('Verify tooling') {
             steps {
                 sh '''
                     docker info
@@ -10,7 +10,7 @@ pipeline {
                 '''
             }
         }
-        stage("Clear all running docker containers") {
+        stage('Clear all running docker containers') {
             steps {
                 script {
                     try {
@@ -21,7 +21,14 @@ pipeline {
                 }
             }
         }
-        stage("Start Docker") {
+        stage('Populate .env file') {
+            steps {
+                dir('/var/lib/jenkins/workspace/envs/uniquo-test') {
+                    fileOperations([fileCopyOperation(excludes: '', flattenFiles: true, includes: '.env', targetLocation: "${WORKSPACE}")])
+                }
+            }
+        }
+        stage('Start Docker') {
             steps {
                 sh 'make up'
                 sh 'docker compose ps'
