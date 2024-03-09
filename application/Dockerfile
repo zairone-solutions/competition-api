@@ -28,17 +28,11 @@ RUN if ! id -u $user > /dev/null 2>&1; then \
     useradd -G www-data,root -u $uid -d /home/$user $user; \
     fi
 
-
 RUN mkdir -p /home/$user/.composer && \
     chown -R $user:$user /home/$user
 
+COPY ./.env /var/www/.env
 
 WORKDIR /var/www
-
-
-COPY ./application /var/www
-
-RUN composer install
-RUN php artisan key:generate
 
 USER $user

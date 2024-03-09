@@ -8,7 +8,7 @@ services:
         uid: 1000
       context: .
       dockerfile: application/Dockerfile
-    image: alinaqi2000/php
+    image: alinaqi2000/uniquo-server
     container_name: uniquo-app
     restart: unless-stopped
     tty: true
@@ -54,7 +54,7 @@ services:
       MYSQL_DATABASE: "${DB_DATABASE}"
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
       MYSQL_USER: "${DB_USERNAME}"
-      MYSQL_PASS: "${DB_PASSWORD}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
     volumes:
       - db_data:/var/lib/mysql/
       - ./mysql/my.cnf:/etc/mysql/my.cnf
@@ -87,7 +87,7 @@ services:
       PMA_PASSWORD: "${DB_PASSWORD}"
     networks:
       - uniquo-app-network
-      
+
   # Horizon Service
   horizon:
     build:
