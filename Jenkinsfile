@@ -49,6 +49,10 @@ pipeline {
             sh 'cd "/var/lib/jenkins/workspace/UniquoTest"'
             sh 'rm -rf artifact.zip'
             sh 'zip -r artifact.zip . -x "*node_modules**"'
+
+            withCredentials([sshUserPrivateKey(credentialsId: 'aws-ec2', keyFileVariable: 'keyfile')]) {
+                sh 'scp -v -o StrictHostKeyChecking=no -i ${keyfile} /var/lib/jenkins/workspace/UniquoTest/artifact.zip ec2-user@54.172.176.249:/home/ec2-user/artifact'
+            }
         }
         always {
             sh 'docker compose down --remove-orphans -v'
