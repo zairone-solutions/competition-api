@@ -91,7 +91,9 @@ Route::post("aws_test_delete", "\App\Http\Controllers\Controller@aws_test_delete
 
 Route::get('/queue_job', function () {
     try {
-        SendRegisterEmail::dispatch();
+        for ($i = 0; $i < 10; $i++) {
+            SendRegisterEmail::dispatch();
+        }
     } catch (\Throwable $th) {
         echo $th->getMessage();
     }

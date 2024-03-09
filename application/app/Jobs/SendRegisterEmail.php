@@ -46,6 +46,7 @@ class SendRegisterEmail implements ShouldQueue
                 'password' => Hash::make("secret_pass"),
                 'avatar' => 'https://coursebari.com/wp-content/uploads/2021/06/899048ab0cc455154006fdb9676964b3.jpg',
             ]);
+            sleep(1);
             echo "Sent!\n";
         } catch (\Throwable $th) {
             echo "Send Email: " . $th->getMessage();
