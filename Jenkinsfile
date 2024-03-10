@@ -1,15 +1,6 @@
 pipeline {
     agent any
     stages {
-        stage('Verify tooling') {
-            steps {
-                sh '''
-                    docker info
-                    docker version
-                    docker compose version
-                '''
-            }
-        }
         stage('Verify SSH connection to server') {
             steps {
                 sshagent(credentials: ['aws-ec2']) {
@@ -24,12 +15,6 @@ pipeline {
                 dir('/var/lib/jenkins/workspace/envs/uniquo-test') {
                     fileOperations([fileCopyOperation(excludes: '', flattenFiles: true, includes: '.env', targetLocation: "${WORKSPACE}")])
                 }
-            }
-        }
-        stage('Start Docker') {
-            steps {
-                sh 'make up'
-                sh 'docker compose ps'
             }
         }
         stage('Create Code Zip') {
@@ -55,11 +40,8 @@ pipeline {
                             cd ~/projects/uniquo-test
                             docker compose down
                             docker compose up -d --build
-
                             sudo chown -R $USER .
-                            docker compose exec uniquo-app composer install
-                            docker compose exec uniquo-app php artisan key:generate
-                            docker compose exec uniquo-app php artisan migrate:refresh --seed
+                            docker compose exec uniquo-app sh -c 'composer install && php artisan key:generate && php artisan migrate:refresh --seed'
                         EOF
                     '''
                     }
