@@ -61,7 +61,6 @@ pipeline {
 
                 sh 'sudo chown -R $USER .'
                 sh 'docker compose exec uniquo-app composer install'
-                sh 'docker compose exec uniquo-app composer install'
                 sh 'docker compose exec uniquo-app php artisan key:generate'
                 sh 'docker compose exec uniquo-app php artisan migrate:refresh --seed'
             }
