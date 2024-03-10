@@ -59,15 +59,16 @@ pipeline {
                 // sh 'docker compose down'
                 // sh 'docker compose up -d --build'
 
-                // sh 'sudo chown -R $USER .'
-                // sh 'docker compose exec uniquo-app composer install'
-                // sh 'docker compose exec uniquo-app php artisan key:generate'
-                // sh 'docker compose exec uniquo-app php artisan migrate:refresh --seed'
+            // sh 'sudo chown -R $USER .'
+            // sh 'docker compose exec uniquo-app composer install'
+            // sh 'docker compose exec uniquo-app php artisan key:generate'
+            // sh 'docker compose exec uniquo-app php artisan migrate:refresh --seed'
             }
             script {
-                sshagent(credentials: ['aws-ec2']) {
-                    // SSH into the EC2 instance
-                    sh '''
+                withCredentials([sshUserPrivateKey(credentialsId: 'aws-ec2', keyFileVariable: 'keyfile')]) {
+                    sshagent(credentials: ['aws-ec2']) {
+                        // SSH into the EC2 instance
+                        sh '''
                         ssh -o StrictHostKeyChecking=no -i ${keyfile} ec2-user@54.172.176.249 << 'EOF'
                             sudo unzip -o ~/artifact/artifact.zip -d ~/projects/uniquo-test
                             cd ~/projects/uniquo-test
@@ -80,6 +81,7 @@ pipeline {
                             docker compose exec uniquo-app php artisan migrate:refresh --seed
                         EOF
                     '''
+                    }
                 }
             }
         }
