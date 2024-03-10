@@ -52,6 +52,18 @@ pipeline {
 
             withCredentials([sshUserPrivateKey(credentialsId: 'aws-ec2', keyFileVariable: 'keyfile')]) {
                 sh 'scp -v -o StrictHostKeyChecking=no -i ${keyfile} /var/lib/jenkins/workspace/UniquoTest/artifact.zip ec2-user@54.172.176.249:/home/ec2-user/artifact'
+
+                // sh 'ssh -i ${keyfile} ec2-user@ec2-54-172-176-249.compute-1.amazonaws.com'
+                sh 'sudo unzip -o ~/artifact/artifact.zip -d ~/projects/uniquo-test'
+                sh 'cd ~/projects/uniquo-test'
+                sh 'docker compose down'
+                sh 'docker compose up -d --build'
+
+                sh 'sudo chown -R $USER .'
+                sh 'docker compose exec uniquo-app composer install'
+                sh 'docker compose exec uniquo-app composer install'
+                sh 'docker compose exec uniquo-app php artisan key:generate'
+                sh 'docker compose exec uniquo-app php artisan migrate:refresh --seed'
             }
         }
         always {
