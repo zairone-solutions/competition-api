@@ -50,7 +50,7 @@
 
                 <div class="s-header__logo">
                     <a class="logo" href="index-particles.html">
-                        <h2 style="font-size: 4rem; margin: 0; color: #fff;">{{ env('APP_NAME') }}</h2>
+                        <h2 style="font-size: 4rem; margin: 0; color: #fff;">{{ env('APP_NAME') }} Project</h2>
 
                     </a>
                 </div>
