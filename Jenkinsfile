@@ -44,8 +44,8 @@ pipeline {
                 }
             }
         }
-
         stage('Make project on EC2') {
+            steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'aws-ec2', keyFileVariable: 'keyfile')]) {
                     sshagent(credentials: ['aws-ec2']) {
                         // SSH into the EC2 instance
@@ -64,6 +64,7 @@ pipeline {
                     '''
                     }
                 }
+            }
         }
     }
 }
