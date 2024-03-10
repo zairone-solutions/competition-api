@@ -53,16 +53,34 @@ pipeline {
             withCredentials([sshUserPrivateKey(credentialsId: 'aws-ec2', keyFileVariable: 'keyfile')]) {
                 sh 'scp -v -o StrictHostKeyChecking=no -i ${keyfile} /var/lib/jenkins/workspace/UniquoTest/artifact.zip ec2-user@54.172.176.249:/home/ec2-user/artifact'
 
-                sh 'ssh -i "~/.ssh/uniquo-key-pair.pem" ec2-user@ec2-54-172-176-249.compute-1.amazonaws.com'
-                sh 'sudo unzip -o ~/artifact/artifact.zip -d ~/projects/uniquo-test'
-                sh 'cd ~/projects/uniquo-test'
-                sh 'docker compose down'
-                sh 'docker compose up -d --build'
+                // sh 'ssh -i ${keyfile} ec2-user@ec2-54-172-176-249.compute-1.amazonaws.com'
+                // sh 'sudo unzip -o ~/artifact/artifact.zip -d ~/projects/uniquo-test'
+                // sh 'cd ~/projects/uniquo-test'
+                // sh 'docker compose down'
+                // sh 'docker compose up -d --build'
 
-                sh 'sudo chown -R $USER .'
-                sh 'docker compose exec uniquo-app composer install'
-                sh 'docker compose exec uniquo-app php artisan key:generate'
-                sh 'docker compose exec uniquo-app php artisan migrate:refresh --seed'
+                // sh 'sudo chown -R $USER .'
+                // sh 'docker compose exec uniquo-app composer install'
+                // sh 'docker compose exec uniquo-app php artisan key:generate'
+                // sh 'docker compose exec uniquo-app php artisan migrate:refresh --seed'
+            }
+            script {
+                sshagent(credentials: ['aws-ec2']) {
+                    // SSH into the EC2 instance
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no -i ${keyfile} ec2-user@54.172.176.249 << 'EOF'
+                            sudo unzip -o ~/artifact/artifact.zip -d ~/projects/uniquo-test
+                            cd ~/projects/uniquo-test
+                            docker compose down
+                            docker compose up -d --build
+
+                            sudo chown -R $USER .
+                            docker compose exec uniquo-app composer install
+                            docker compose exec uniquo-app php artisan key:generate
+                            docker compose exec uniquo-app php artisan migrate:refresh --seed
+                        EOF
+                    '''
+                }
             }
         }
         always {
