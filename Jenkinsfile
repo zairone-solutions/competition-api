@@ -5,7 +5,7 @@ pipeline {
             steps {
                 sshagent(credentials: ['aws-ec2']) {
                     sh '''
-                        ssh -o StrictHostKeyChecking=no ec2-user@3.84.86.29 whoami
+                        ssh -o StrictHostKeyChecking=no ec2-user@3.83.154.232 whoami
                     '''
                 }
             }
@@ -25,7 +25,7 @@ pipeline {
         stage('Upload Code Zip to EC2') {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'aws-ec2', keyFileVariable: 'keyfile')]) {
-                    sh 'scp -v -o StrictHostKeyChecking=no -i ${keyfile} /var/lib/jenkins/workspace/UniquoTest/artifact.zip ec2-user@3.84.86.29:/home/ec2-user/artifact'
+                    sh 'scp -v -o StrictHostKeyChecking=no -i ${keyfile} /var/lib/jenkins/workspace/UniquoTest/artifact.zip ec2-user@3.83.154.232:/home/ec2-user/artifact'
                 }
             }
         }
@@ -35,12 +35,12 @@ pipeline {
                     sshagent(credentials: ['aws-ec2']) {
                         // SSH into the EC2 instance
                     //     sh '''
-                    //     ssh -o StrictHostKeyChecking=no -i ${keyfile} ec2-user@3.84.86.29 << 'EOF'
+                    //     ssh -o StrictHostKeyChecking=no -i ${keyfile} ec2-user@3.83.154.232 << 'EOF'
                     //         sudo unzip -o ~/artifact/artifact.zip -d ~/projects/uniquo-test
                     //     EOF
                     // '''
                         sh '''
-                        ssh -o StrictHostKeyChecking=no -i ${keyfile} ec2-user@3.84.86.29 << 'EOF'
+                        ssh -o StrictHostKeyChecking=no -i ${keyfile} ec2-user@3.83.154.232 << 'EOF'
                             sudo unzip -o ~/artifact/artifact.zip -d ~/projects/uniquo-test
                             cd ~/projects/uniquo-test
                             docker compose down
