@@ -34,6 +34,11 @@ pipeline {
                 withCredentials([sshUserPrivateKey(credentialsId: 'aws-ec2', keyFileVariable: 'keyfile')]) {
                     sshagent(credentials: ['aws-ec2']) {
                         // SSH into the EC2 instance
+                    //     sh '''
+                    //     ssh -o StrictHostKeyChecking=no -i ${keyfile} ec2-user@3.84.86.29 << 'EOF'
+                    //         sudo unzip -o ~/artifact/artifact.zip -d ~/projects/uniquo-test
+                    //     EOF
+                    // '''
                         sh '''
                         ssh -o StrictHostKeyChecking=no -i ${keyfile} ec2-user@3.84.86.29 << 'EOF'
                             sudo unzip -o ~/artifact/artifact.zip -d ~/projects/uniquo-test

@@ -2,6 +2,9 @@ version: "3"
 services:
   #PHP Service
   uniquo-app:
+    deploy:
+      mode: replicated
+      replicas: 5
     build:
       args:
         user: ${DOCKER_SYSTEM_USER}
@@ -9,7 +12,7 @@ services:
       context: .
       dockerfile: application/Dockerfile
     image: alinaqi2000/uniquo-server
-    container_name: uniquo-app
+    # container_name: uniquo-app
     restart: unless-stopped
     tty: true
     environment:
@@ -95,7 +98,9 @@ services:
         uid: 1000
       context: .
       dockerfile: application/Dockerfile
-    container_name: uniquo-horizon
+    deploy:
+      mode: replicated
+      replicas: 3
     restart: unless-stopped
     tty: true
     depends_on:
