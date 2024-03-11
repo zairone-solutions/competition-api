@@ -37,10 +37,12 @@ services:
       - "443:443"
     volumes:
       - ./application:/var/www
-      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./nginx/${DOCKER_NGINX_DIR}/:/etc/nginx/conf.d/
       - ./nginx-logs:/var/log/nginx
     networks:
       - uniquo-app-network
+    depends_on:
+      - uniquo-app
 
   #MySQL Service
   uniquo-db:
