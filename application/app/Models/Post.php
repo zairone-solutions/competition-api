@@ -18,6 +18,7 @@ class Post extends Model
         "hidden",
         "user_id",
         "competition_id",
+        "state",
         "approved_at",
     ];
 
@@ -30,7 +31,18 @@ class Post extends Model
     {
         return $query->where('hidden', "0");
     }
-
+    public function scopeVoted($query)
+    {
+        return $query->where('state', "voted");
+    }
+    public function scopeDraft($query)
+    {
+        return $query->where('state', "draft");
+    }
+    public function scopeCreated($query)
+    {
+        return $query->where('state', "created");
+    }
     // relations
     public function user()
     {

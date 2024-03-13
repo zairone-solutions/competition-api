@@ -57,7 +57,11 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         // Posts
         Route::get("posts", "PostController@personal");
         Route::get("posts/{competition}", "PostController@all");
-        Route::post("posts/{competition}", "PostController@store")->middleware("competition_participant");
+        // Route::post("posts/{competition}", "PostController@store")->middleware("competition_participant");
+        Route::post("posts_text/{competition}/draft", "PostController@store_text")->middleware("competition_participant");
+        Route::post("posts_image/{competition}/draft/{post}", "PostController@store_image")->middleware("competition_participant");
+        Route::post("posts_video/{competition}/draft/{post}", "PostController@store_video")->middleware("competition_participant");
+
         Route::put("posts/{competition}/update/{post}", "PostController@update")->middleware("competition_participant");
         Route::delete("posts/{competition}/delete_image/{post_image}", "PostController@delete_image")->middleware("competition_participant");
         Route::post("posts/{competition}/upload_image/{post}", "PostController@upload_image")->middleware("competition_participant");

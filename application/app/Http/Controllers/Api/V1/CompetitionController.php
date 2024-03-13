@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Helpers\RuleHelper;
 use App\Http\Resources\CompetitionCommentResource;
 use App\Http\Resources\CompetitionResource;
 use App\Jobs\CompetitionParticipatedJob;
@@ -59,18 +60,6 @@ class CompetitionController extends BaseController
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
         }
     }
-
-    private function getCompetitionRules($key = NULL)
-    {
-        $rules = [];
-        $competition = Setting::where("key", "competition")->first();
-        $competition_setting = $competition->children()->get();
-        foreach ($competition_setting as $rule) {
-            if ($key && $key == $rule->key) return $rule->value;
-            $rules[$rule->key] = $rule->value;
-        }
-        return $rules;
-    }
     private function calculateCompetitionCost(float $participants)
     {
         $cost_per_participant = (float) $this->getCompetitionRules("cost_per_participant");
@@ -92,7 +81,7 @@ class CompetitionController extends BaseController
     public function store(Request $request)
     {
         try {
-            $competition_rules = $this->getCompetitionRules();
+            $competition_rules = RuleHelper::rules("competition");
 
             $rules = [
                 'category_id' => ["required", Rule::exists('categories', "id")->where(function ($query) use ($request) {
@@ -146,7 +135,7 @@ class CompetitionController extends BaseController
                 return $this->resMsg(["error" => "Published competition can not be edited."], "authentication", 400);
             }
 
-            $competition_rules = $this->getCompetitionRules();
+            $competition_rules = RuleHelper::rules("competition");
 
             $rules = [
                 'category_id' => ["required", Rule::exists('categories', "id")->where(function ($query) use ($request) {
@@ -206,7 +195,7 @@ class CompetitionController extends BaseController
     public function publish(Request $request, Competition $competition)
     {
         try {
-            $competition_rules = $this->getCompetitionRules();
+            $competition_rules = RuleHelper::rules("competition");
 
             if (auth()->user()->id !== $competition->organizer_id) {
                 return $this->resMsg(["error" => "Only organizer can publish a competition."], "validation", 400);

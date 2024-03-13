@@ -14,7 +14,7 @@ class PostImageResource extends BaseResource
     {
         return [
             'id' => $this->id,
-            'url' => asset("storage/" . $this->image)
+            'url' => $this->image
         ];
     }
 }

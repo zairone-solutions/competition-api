@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Helpers\RuleHelper;
 use App\Http\Resources\PostImageResource;
 use App\Http\Resources\PostJustified;
 use App\Http\Resources\PostJustifiedResource;
@@ -19,6 +20,7 @@ use App\Models\Post;
 use App\Models\PostImage;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Image;
@@ -50,50 +52,99 @@ class PostController extends BaseController
     {
         return $this->resData(PostJustifiedResource::collection(auth()->user()->posts()->paginate(20)));
     }
-    public function store(Request $request, Competition $competition)
+    public function store_text(Request $request, Competition $competition)
     {
-        if ($competition->posts()->where("user_id", auth()->user()->id)->count()) {
-            return $this->resMsg(["error" => "You have already posted in the competition."], "authentication", 400);
+
+        try {
+            $competition_rules = RuleHelper::rules("competition");
+
+            if (
+                $competition->posts()->where("user_id", auth()->user()->id)->created()->count()
+                || $competition->posts()->where("user_id", auth()->user()->id)->voted()->count()
+
+            ) {
+                return $this->resMsg(["error" => "You have already posted in the competition."], "validation", 403);
+            }
+
+            if ($competition->posts()->where("user_id", auth()->user()->id)->draft()->count() == $competition_rules['max_drafts_allowed']) {
+                return $this->resMsg(["error" => "You can only create " . $competition_rules['max_drafts_allowed'] . " drafts per competition."], "validation", 403);
+            }
+
+            $rules = [
+                "description" => ["nullable", "max:450", "bad_word"]
+            ];
+            $errors = $this->reqValidate($request->all(), $rules, [
+                'bad_word' => 'The :attribute cannot contain any inappropriate word.'
+            ]);
+            if ($errors) return $errors;
+
+            DB::beginTransaction();
+
+            $post = $competition->posts()->create([
+                'user_id' => auth()->user()->id,
+                'description' => $request->description,
+                'state' => "draft"
+            ]);
+
+            DB::commit();
+
+            return $this->resData(PostResource::make($post));
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
         }
+    }
 
-        $post_rules = $this->getPostRules();
-        $rules = [
-            "description" => ["nullable", "max:450", "bad_word"],
-            'image' => ["required", "array", "size:" .  $post_rules['no_of_images_allowed']],
-            'image.*' => ["image", "mimes:jpeg,png,jpg", "max:" . ((int) $post_rules['max_image_size'] * 1024)],
-        ];
-        $errors = $this->reqValidate($request->all(), $rules, [
-            'bad_word' => 'The :attribute cannot contain any inappropriate word.',
-            "image.size" => "You can only upload " . $post_rules['no_of_images_allowed'] . " images.",
-            "image.*.image" => "Please upload a valid image.",
-            "image.*.mimes" => "The image must be a file of type: jpeg, png, jpg.",
-            "image.*.max" => "The image must not be greater than " . $post_rules['max_image_size'] . "mb.",
-        ]);
-        if ($errors) return $errors;
+    public function store_image(Request $request, Competition $competition, Post $post)
+    {
 
-        $post = $competition->posts()->create([
-            'user_id' => auth()->user()->id,
-            'description' => $request->description
-        ]);
+        try {
+            $post_rules = RuleHelper::rules("post");
 
-        $images = $request->file("image");
-        foreach ($images as $image) {
-            $imageName = time() . "_" . rand(1111, 9999) . "." . $image->getClientOriginalExtension();
+            if ($post->images()->count() == $post_rules['no_of_images_allowed']) {
+                return $this->resMsg(["error" => "You can only upload " . $post_rules['no_of_images_allowed'] . " images per post."], "validation", 403);
+            }
+
+            $rules = [
+                'image' => ["required", "image", "", "mimes:jpeg,png,jpg", "max:" . ((int) $post_rules['max_image_size'] * 1024)],
+            ];
+            $errors = $this->reqValidate($request->all(), $rules, [
+                "image.size" => "You can only upload " . $post_rules['no_of_images_allowed'] . " images.",
+                "image.image" => "Please upload a valid image.",
+                "image.mimes" => "The image must be a file of type: jpeg, png, jpg.",
+                "image.max" => "The image must not be greater than " . $post_rules['max_image_size'] . "mb.",
+            ]);
+            if ($errors) return $errors;
+
+            DB::beginTransaction();
+
+            $image = $request->file("image");
             $imgFile = Image::make($image->getRealPath());
+
             $imgFile->orientate();
             $imgFile->resize((int) $post_rules['image_resize_width'] ?? 720, (int) $post_rules['image_resize_height'] ?? 480, function ($constraint) {
                 $constraint->aspectRatio();
                 $constraint->upsize();
-            })->save(public_path('storage/posts/') .  $imageName);
+            });
 
-            // $img->storeAs('public/posts', $imageName);
-            $post->images()->create(['image' => "posts/" . $imageName, "mime_type" => $image->extension()]);
+            // die($imgFile->basePath());
+
+            $path = Storage::disk('s3')->put('images/posts/', $imgFile->encode());
+            $aws_path = Storage::disk('s3')->url($path);
+
+            $post->images()->create(['image' => $aws_path, "mime_type" => $image->extension()]);
+
+            DB::commit();
+
+            return $this->resData(PostResource::make($post));
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
         }
-        return $this->resData(PostResource::make($post));
     }
     public function update(Request $request, Competition $competition, Post $post)
     {
-        $post_rules = $this->getPostRules();
+        $post_rules = RuleHelper::rules("post");
         $rules = [
             "description" => ["nullable", "max:450", "bad_word"],
             // 'image' => ["nullable", "array", "size:3"],
@@ -131,7 +182,7 @@ class PostController extends BaseController
     }
     public function upload_image(Request $request, Competition $competition, Post $post)
     {
-        $post_rules = $this->getPostRules();
+        $post_rules = RuleHelper::rules("post");
 
         if ($post->images()->count() >= (int) $post_rules['no_of_images_allowed']) {
             return $this->resMsg(["error" => "Maximum images limit reached! Please delete any image to upload a new one."], "authentication", 400);
