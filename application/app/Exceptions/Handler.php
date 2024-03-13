@@ -57,12 +57,17 @@ class Handler extends ExceptionHandler
     }
     public function render($request, $e)
     {
-
+        // die(get_class($e));
         if ($request->is('api/*')) {
-            if (get_class($e) == 'ParseError') {
+            if (get_class($e) == 'ParseError' || get_class($e) == 'ErrorException') {
                 return response()->json([
                     'error_type' => 'server', 'messages' => ["error" => $e->getMessage()]
                 ], 500);
+            }
+            if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                return response()->json([
+                    'error_type' => 'validation', 'messages' => 'Url entity does not exist.'
+                ], 404);
             }
             if ($e instanceof \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException) {
                 return response()->json([

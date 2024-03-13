@@ -17,6 +17,7 @@ class PostResource extends BaseResource
         return [
             'id' => $this->id,
             'description' => $this->description,
+            'state' => $this->state,
             'posted_at' => $this->time2str($this->created_at),
             'votes' => $votes,
             "winner" => $this->competition->winner_id == $this->user->id,
