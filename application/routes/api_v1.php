@@ -39,6 +39,7 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         // Categories
         Route::post("categories", "CategoryController@request");
         Route::get("categories", "CategoryController@all");
+        Route::get("user_categories", "CategoryController@user_all");
 
         // Competitions
         Route::get("competitions", "CompetitionController@all");
@@ -88,6 +89,7 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
 
 Route::post("aws_test_upload", "\App\Http\Controllers\Controller@aws_test_upload");
 Route::post("aws_test_delete", "\App\Http\Controllers\Controller@aws_test_delete");
+Route::get("test_supabase", "\App\Http\Controllers\Controller@test_supabase");
 
 Route::get('/queue_job', function () {
     try {
@@ -96,5 +98,27 @@ Route::get('/queue_job', function () {
         }
     } catch (\Throwable $th) {
         echo $th->getMessage();
+    }
+});
+Route::get('/queue_db', function () {
+    try {
+        echo "Creating Users\n";
+
+        $faker = \Faker\Factory::create();
+        for ($i = 0; $i < 10; $i++) {
+            $username = $faker->userName . rand(11111, 99999);
+            $participant = \App\Models\User::create([
+                'username' => $username,
+                'email' =>   $username . "@gmail.com",
+                'full_name' => 'Participant User',
+                'email_verified_at' => date_format($faker->dateTimeBetween("-5 years"), 'Y-m-d H:i:s'),
+                'auth_provider' => 'email',
+                'password' => Hash::make("secret_pass"),
+                'avatar' => 'https://coursebari.com/wp-content/uploads/2021/06/899048ab0cc455154006fdb9676964b3.jpg',
+            ]);
+        }
+        echo "Users Created!\n";
+    } catch (\Throwable $th) {
+        echo "Send Email: " . $th->getMessage();
     }
 });

@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('BROADCAST_DRIVER', 'null'),
+    'default' => env('BROADCAST_DRIVER', 'ably'),
 
     /*
     |--------------------------------------------------------------------------
@@ -37,18 +37,24 @@ return [
             'app_id' => env('PUSHER_APP_ID'),
             'options' => [
                 'cluster' => env('PUSHER_APP_CLUSTER'),
-                'useTLS' => true,
+                // 'encrypted' => true, // for production
+                'useTLS' => true, // for development
+                'port' => env("LARAVEL_WEBSOCKETS_PORT"),
+                'host' => env("BROADCAST_HOST"),
+                'schema' => env("BROADCAST_SCHEMA")
             ],
         ],
 
         'ably' => [
             'driver' => 'ably',
-            'key' => env('ABLY_KEY'),
+            'key' => env('ABLY_KEY')
         ],
 
         'redis' => [
             'driver' => 'redis',
             'connection' => 'default',
+            'queue' => '{default}',
+            'retry_after' => 90,
         ],
 
         'log' => [

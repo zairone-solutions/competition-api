@@ -30,6 +30,11 @@ class Competition extends Model
         "payment_verified_at",
     ];
 
+    // conditions
+    public function isPublished()
+    {
+        return $this->published_at;
+    }
     // scopes
     public function scopePublished($query)
     {
