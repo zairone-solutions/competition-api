@@ -28,4 +28,16 @@ class CategoryController extends BaseController
         $cats = Category::where(...$condition)->verified()->get();
         return $this->resData(CategoryResource::collection($cats));
     }
+    public function user_all(Request $request)
+    {
+        $condition = [[]];
+        if ($request->has("s")) {
+            $condition = ['title', 'LIKE', '%' . $request->get("s") . '%'];
+        }
+        $cats = Category::where(...$condition)->verified()->get()->merge(
+            auth()->user()->category_suggests()->where(...$condition)->get()
+        );
+
+        return $this->resData(CategoryResource::collection($cats));
+    }
 }

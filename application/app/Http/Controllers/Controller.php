@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Storage;
+use PHPSupabase\Service;
 
 class Controller extends BaseController
 {
@@ -27,6 +28,25 @@ class Controller extends BaseController
             return response()->json(['error' => $th->getMessage()]);
         }
     }
+    public function test_supabase()
+    {
+        try {
+            $service = new Service(
+                env("SUPABASE_ANON_KEY"),
+                env("SUPABASE_URL")
+            );
+
+            $db = $service->initializeDatabase('todos', 'id');
+            $newCategory = [
+                'name' => 'Video Games ' . rand(1111, 9999)
+            ];
+            $data = $db->insert($newCategory);
+            print_r($data);
+        } catch (\Throwable $th) {
+            echo "Error: " . $th->getMessage();
+        }
+    }
+
     function aws_test_delete(Request $request)
     {
         try {

@@ -37,12 +37,39 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
-        $this->renderable(function (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e, $request) {
-            if ($request->is('api/*')) {
+        // $this->renderable(function ($e, $request) {
+        //     if ($request->is('api/*')) {
+        //         if ($e instanceof ParseError) {
+        //             return response()->json([
+        //                 'error' => 'Parse Error',
+        //                 'message' => 'There was an error parsing the request data.',
+        //                 'code' => 400, // Adjust the code as needed (e.g., 422 for unprocessable entity)
+        //             ], 400);
+        //         }
+        //         if ($e instanceof \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException) {
+        //             return response()->json([
+        //                 'error_type' => 'authorization', 'messages' => 'Invalid token ability.'
+        //             ], 401);
+        //         }
+        //     }
+        //     return parent::render($request, $e);
+        // });
+    }
+    public function render($request, $e)
+    {
+
+        if ($request->is('api/*')) {
+            if (get_class($e) == 'ParseError') {
+                return response()->json([
+                    'error_type' => 'server', 'messages' => ["error" => $e->getMessage()]
+                ], 500);
+            }
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException) {
                 return response()->json([
                     'error_type' => 'authorization', 'messages' => 'Invalid token ability.'
                 ], 401);
             }
-        });
+        }
+        return parent::render($request, $e);
     }
 }

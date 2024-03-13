@@ -119,6 +119,30 @@ services:
     networks:
       - uniquo-app-network
 
+  uniquo-websockets:
+    build:
+      args:
+        user: ${DOCKER_SYSTEM_USER}
+        uid: 1000
+      context: .
+      dockerfile: application/Dockerfile
+    ports:
+      - "6001:6001"
+    environment:
+      SERVICE_NAME: uniquo-horizon
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./application:/var/www
+      - ./.env:/var/www/.env
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    command: php artisan websockets:serve
+    depends_on:
+      - uniquo-app
+      - uniquo-redis
+    networks:
+      - uniquo-app-network
+
 #Docker Networks
 networks:
   uniquo-app-network:

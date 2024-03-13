@@ -10,12 +10,12 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Codeliter\ExpoPush\Expo\PushNotification;
+use Illuminate\Support\Facades\DB;
 
 class BaseController extends Controller
 {
     protected $API_VERSION = "v1";
     protected $API_URI = "api/v1/";
-
 
     public function resData($data, $error_type = FALSE, $code = 200)
     {

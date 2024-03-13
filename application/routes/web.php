@@ -1,6 +1,12 @@
 <?php
 
+use App\Events\NewMessageNotification;
 use Illuminate\Support\Facades\Route;
+use BeyondCode\LaravelWebSockets\Facades\WebSocketRouter;
+use Ably\AblyRest;
+
+
+// Define a route to handle WebSocket connections
 
 /*
 |--------------------------------------------------------------------------
@@ -13,8 +19,32 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::post('/broadcasting/auth', function (\Illuminate\Http\Request $request) {
+    return response()->json([], 200)->header('Access-Control-Allow-Origin', '*');
+});
+
+Route::get('/socket.io', function (\Illuminate\Http\Request $request) {
+    return response()->json([], 200)->header('Access-Control-Allow-Origin', '*');
+});
+Route::get('/message', function (\Illuminate\Http\Request $request) {
+    try {
+        $ably = new AblyRest(config('broadcasting.connections.ably.key'));
+        $channel = $ably->channels->get('messages');
+
+        $channel->publish('new-message', ['message' => "This is a message no." . rand(1111, 4444)]);
+
+        return response()->json(['success' => true]);
+    } catch (\Throwable $th) {
+        echo $th->getMessage();
+    }
+});
+WebSocketRouter::get('/socket', \App\Http\Controllers\WebSocketController::class);
+
 Route::get('/', function () {
     return view('welcome');
+});
+Route::get('/test-sockets', function () {
+    return view('test-sockets');
 });
 Route::redirect('admin', 'login');
 Route::redirect('/home', 'setting');
