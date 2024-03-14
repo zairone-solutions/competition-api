@@ -6,11 +6,14 @@ use App\Helpers\RuleHelper;
 use App\Http\Resources\PostImageResource;
 use App\Http\Resources\PostJustified;
 use App\Http\Resources\PostJustifiedResource;
+use App\Http\Resources\PostMediaResource;
 use App\Http\Resources\PostObjectionResource;
 use App\Http\Resources\PostOrganizerResource;
 use App\Http\Resources\PostReportResource;
 use App\Http\Resources\PostResource;
 use App\Http\Resources\PostVoterResource;
+use App\Jobs\UploadImageToS3;
+use App\Jobs\UploadVideoToS3;
 use App\Mail\Post\PostApproveAlert;
 use App\Mail\Post\PostObjectionAlert;
 use App\Mail\Post\PostReportAlert;
@@ -24,6 +27,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Image;
+use FFMpeg;
+use Illuminate\Support\Facades\URL;
 
 class PostController extends BaseController
 {
@@ -101,8 +106,8 @@ class PostController extends BaseController
         try {
             $post_rules = RuleHelper::rules("post");
 
-            if ($post->images()->count() == $post_rules['no_of_images_allowed']) {
-                return $this->resMsg(["error" => "You can only upload " . $post_rules['no_of_images_allowed'] . " images per post."], "validation", 403);
+            if ($post->media()->count() == $post_rules['no_of_images_allowed']) {
+                return $this->resMsg(["error" => "You can only upload " . $post_rules['no_of_images_allowed'] . " media files per post."], "validation", 403);
             }
 
             $rules = [
@@ -118,25 +123,69 @@ class PostController extends BaseController
 
             DB::beginTransaction();
 
-            $image = $request->file("image");
-            $imgFile = Image::make($image->getRealPath());
+            $image = $request->file('image');
 
-            $imgFile->orientate();
-            $imgFile->resize((int) $post_rules['image_resize_width'] ?? 720, (int) $post_rules['image_resize_height'] ?? 480, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            });
+            $temporaryFilePath = $image->store('public/uploads/temporary_images');
 
-            // die($imgFile->basePath());
+            $media = $post->media()->create(['media' => asset(str_replace("public", "storage", $temporaryFilePath)), "mime_type" => $image->extension()]);
 
-            $path = Storage::disk('s3')->put('images/posts/', $imgFile->encode());
-            $aws_path = Storage::disk('s3')->url($path);
+            $fileName = uniqid() . '.' . $image->getClientOriginalExtension();
+            $path = "images/posts/" . $fileName;
 
-            $post->images()->create(['image' => $aws_path, "mime_type" => $image->extension()]);
+            UploadImageToS3::dispatch($media, $path, $temporaryFilePath);
 
             DB::commit();
 
-            return $this->resData(PostResource::make($post));
+            return $this->resData(PostMediaResource::make($media));
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
+    public function store_video(Request $request, Competition $competition, Post $post)
+    {
+
+        try {
+            $post_rules = RuleHelper::rules("post");
+
+            if ($post->media()->count() == $post_rules['no_of_images_allowed']) {
+                return $this->resMsg(["error" => "You can only upload " . $post_rules['no_of_images_allowed'] . " media files per post."], "validation", 403);
+            }
+
+            $rules = [
+                'video' => [
+                    'required',
+                    'file',
+                    'mimes:mp4,avi,mov', // Adjust the allowed video formats as needed
+                    'max:' . ((int)$post_rules['max_video_size'] * 1024), // Convert to kilobytes
+                ],
+            ];
+            $errors = $this->reqValidate($request->all(), $rules, [
+                'video.required' => 'Please upload a video.',
+                'video.file' => 'Please upload a valid file.',
+                'video.mimes' => 'The video must be a file of type: mp4, avi, mov.',
+                'video.max' => 'The video must not be greater than ' . $post_rules['max_video_size'] . 'MB.',
+            ]);
+            if ($errors) {
+                return $errors;
+            }
+
+            DB::beginTransaction();
+
+            $video = $request->file('video');
+
+            $temporaryFilePath = $video->store('public/uploads/temporary_videos');
+
+            $media = $post->media()->create(['media' => asset(str_replace("public", "storage", $temporaryFilePath)), "type" => "video", "mime_type" => $video->extension()]);
+
+            $fileName = uniqid() . '.' . $video->getClientOriginalExtension();
+            $path = "videos/posts/" . $fileName;
+
+            UploadVideoToS3::dispatch($media, $path, $temporaryFilePath);
+
+            DB::commit();
+
+            return $this->resData(PostMediaResource::make($media));
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);

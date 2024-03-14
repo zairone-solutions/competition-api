@@ -16,6 +16,7 @@ class SettingsSeeder extends Seeder
     {
         $competition = Setting::create(['key' => "competition", 'title' => "Competition"]);
         $competition->children()->create(['key' => 'cost_per_participant', 'rule' => "required|numeric", 'title' => "Cost Per Participant", 'value' => 10]);
+        $competition->children()->create(['key' => 'platform_charges', 'rule' => "required|numeric", 'title' => "Platform Charges", 'value' => 150]);
         $competition->children()->create(['key' => 'min_competition_days', 'rule' => "required|numeric", 'title' => "Minimum Competition Days", 'value' => 14]);
         $competition->children()->create(['key' => 'max_competition_days', 'rule' => "required|numeric", 'title' => "Maximum Competition Days", 'value' => 28]);
         $competition->children()->create(['key' => 'voting_delay_days', 'rule' => "required|numeric", 'title' => "Voting Delay Days (after publishing)", 'value' => 3]);
@@ -31,5 +32,10 @@ class SettingsSeeder extends Seeder
         $post->children()->create(['key' => 'no_of_images_allowed', 'rule' => "required|numeric", 'title' => "Allowed Images per post", 'value' => 3]);
         $post->children()->create(['key' => 'image_resize_width', 'rule' => "required|numeric", 'title' => "Image Resize Width (px)", 'value' => 720]);
         $post->children()->create(['key' => 'image_resize_height', 'rule' => "required|numeric", 'title' => "Image Resize Height (px)", 'value' => 480]);
+        $post->children()->create(['key' => 'image_quality', 'rule' => "required|numeric", 'title' => "Image Quality (%)", 'value' => 60]);
+
+        $post->children()->create(['key' => 'max_video_size', 'rule' => "required|numeric", 'title' => "Max Video Size (MB)", 'value' => 40]);
+        $post->children()->create(['key' => 'video_resize_width', 'rule' => "required|numeric", 'title' => "Video Resize Width (px)", 'value' => 480]);
+        $post->children()->create(['key' => 'video_resize_height', 'rule' => "required|numeric", 'title' => "Video Resize Height (px)", 'value' => 320]);
     }
 }

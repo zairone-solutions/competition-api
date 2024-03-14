@@ -22,7 +22,7 @@ class PostResource extends BaseResource
             'votes' => $votes,
             "winner" => $this->competition->winner_id == $this->user->id,
             "user" => UserResource::make($this->user),
-            'images' => PostImageResource::collection($this->images),
+            'images' => PostMediaResource::collection($this->media),
         ];
     }
 

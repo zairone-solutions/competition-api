@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PostImage extends Model
+class CompetitionFinancial extends Model
 {
     use HasFactory;
     /**
@@ -14,17 +14,16 @@ class PostImage extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        "post_id",
-        "image",
-        "mime_type"
+        "competition_id",
+        "cost",
+        "platform_charges",
+        "entry_fee",
+        "prize_money",
+        "total",
     ];
-
-    public $timestamps = false;
-
     // relations
-    public function post()
+    public function competition()
     {
-        return $this->belongsTo(Post::class);
+        return $this->belongsTo(Competition::class, "competition_id");
     }
-
 }

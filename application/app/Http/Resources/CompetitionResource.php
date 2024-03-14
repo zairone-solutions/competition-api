@@ -18,8 +18,11 @@ class CompetitionResource extends BaseResource
             "title" => $this->title,
             "description" => $this->description,
             "slug" => $this->slug,
-            "entry_fee" => number_format($this->entry_fee),
-            "prize_money" => number_format($this->prize_money),
+            "financials" => [
+                "entry_fee" => number_format($this->financial->entry_fee),
+                "prize_money" => number_format($this->financial->prize_money),
+                "total_amount" => number_format($this->financial->total),
+            ],
             "participations" => $this->participants()->count(),
             "participants_allowed" => $this->participants_allowed,
             "voting_start_at" => date("M d, Y", strtotime($this->voting_start_at)),

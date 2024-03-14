@@ -48,9 +48,9 @@ class Post extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function images()
+    public function media()
     {
-        return $this->hasMany(PostImage::class);
+        return $this->hasMany(PostMedia::class);
     }
     public function competition()
     {
@@ -63,6 +63,10 @@ class Post extends Model
     public function reports()
     {
         return $this->hasMany(PostReport::class);
+    }
+    public function comments()
+    {
+        return $this->hasMany(PostComment::class);
     }
     public function objection()
     {

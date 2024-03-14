@@ -92,9 +92,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(CompetitionParticipant::class, 'participant_id');
     }
-    public function competition_comments()
+    public function post_comments()
     {
-        return $this->hasMany(CompetitionComment::class);
+        return $this->hasMany(PostComment::class);
     }
     public function payments()
     {

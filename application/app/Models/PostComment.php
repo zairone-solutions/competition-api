@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class CompetitionComment extends Model
+class PostComment extends Model
 {
     use HasFactory;
     /**
@@ -14,7 +14,7 @@ class CompetitionComment extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        "competition_id",
+        "post_id",
         "comment_id",
         "text",
         "hidden",
@@ -42,4 +42,5 @@ class CompetitionComment extends Model
     {
         return $this->hasMany(self::class, 'comment_id');
     }
+
 }

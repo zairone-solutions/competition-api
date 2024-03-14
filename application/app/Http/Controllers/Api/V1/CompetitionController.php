@@ -29,6 +29,13 @@ class CompetitionController extends BaseController
         }
         return $voted;
     }
+    private function calculateCompetitionCost(float $participants)
+    {
+        $competition_rules = RuleHelper::rules("competition");
+        $cost_per_participant = (float) $competition_rules["cost_per_participant"];
+
+        return $cost_per_participant * $participants;
+    }
     private function participated()
     {
         $participated = [];
@@ -36,6 +43,23 @@ class CompetitionController extends BaseController
             $participated[] = $vote->competition()->first();
         }
         return $participated;
+    }
+
+    public function calculate_financials(Request $request)
+    {
+        try {
+
+            $competition_rules = RuleHelper::rules("competition");
+
+            $cost = $this->calculateCompetitionCost($request->participants ?? 0);
+
+            return $this->resData([
+                'platform_charges' => (float) $competition_rules["platform_charges"],
+                'cost' => $cost
+            ]);
+        } catch (\Throwable $th) {
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
     }
 
     public function all(Request $request)
@@ -60,18 +84,13 @@ class CompetitionController extends BaseController
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
         }
     }
-    private function calculateCompetitionCost(float $participants)
-    {
-        $cost_per_participant = (float) $this->getCompetitionRules("cost_per_participant");
-        return $cost_per_participant * $participants;
-    }
+
     private function generateCompetitionSlug($title)
     {
         $slug = Str::slug($title);
         if (Competition::where("slug", $slug)->count() == 0) {
             return $slug;
         }
-
         do {
             $slug = Str::slug($title) . "-" .  rand(111, 9999);
         } while (Competition::where("slug", $slug)->count() != 0);
@@ -111,13 +130,20 @@ class CompetitionController extends BaseController
                 "title" => $request->title,
                 "description" => $request->description,
                 "slug" => $this->generateCompetitionSlug($request->title),
-                "cost" => $this->calculateCompetitionCost($request->participants_allowed),
-                "paid" => (int) $request->entry_fee > 0,
-                "entry_fee" => $request->entry_fee,
-                "prize_money" => $request->prize_money,
+                "paid" => (float) $request->entry_fee > 0,
                 "participants_allowed" => $request->participants_allowed,
                 "announcement_at" => date("Y-m-d H:i:s", strtotime($request->announcement_at)),
                 "voting_start_at" => date("Y-m-d H:i:s", strtotime($request->voting_start_at)),
+            ]);
+
+            $cost = $this->calculateCompetitionCost($request->participants_allowed);
+            $total = $cost + (float) $request->prize_money + (float) $competition_rules["platform_charges"];
+            $competition->financial()->create([
+                "cost" => (float) $cost,
+                "entry_fee" => (float) $request->entry_fee,
+                "prize_money" => (float) $request->prize_money,
+                "total" => (float) $total,
+                "platform_charges" => $competition_rules["platform_charges"],
             ]);
 
             DB::commit();
@@ -143,19 +169,20 @@ class CompetitionController extends BaseController
                 }),],
                 'title' => ["required", "max:50", "min:3", "bad_word"],
                 'description' => ["nullable", "max:450", "bad_word"],
-                "paid" => (int) $request->entry_fee > 0,
                 'entry_fee' => ["required", "numeric", "min:" . $competition_rules["min_entry_fee"], "max:" . $competition_rules["max_prize_money"]],
                 'prize_money' => ["required", "numeric", "min:" . $competition_rules["min_prize_money"], "max:" . $competition_rules["max_prize_money"]],
                 'participants_allowed' => ["required", "numeric", "min:" . $competition_rules["min_participants_allowed"], "max:" . $competition_rules["max_participants_allowed"]],
-                "announcement_at" => ["required"],
-                "voting_start_at" => ["required"],
+                "announcement_at" => ["required", "after_or_equal:" .  $competition_rules['min_competition_days'] . " days", "before_or_equal:" . $competition_rules['max_competition_days'] . " days"],
+                "voting_start_at" => ["required", "after_or_equal:" .  $competition_rules['voting_delay_days'] . " days"],
             ];
             $errors = $this->reqValidate($request->all(), $rules, [
                 'category_id.exists' => "Invalid category.",
                 'bad_word' => 'The :attribute cannot contain any inappropriate word.',
+                'voting_start_at.after_or_equal' => "The voting date must be after {$competition_rules['voting_delay_days']} days from today.",
+                'announcement_at.after_or_equal' => "The announcement date must be {$competition_rules['min_competition_days']} days after starting the competition.",
+                'announcement_at.before_or_equal' => "The announcement date must be {$competition_rules['max_competition_days']} days from now."
             ]);
             if ($errors) return $errors;
-
             // time validations
             if (strtotime($request->announcement_at) > strtotime("+" . $competition_rules['max_competition_days'] . " days")) {
                 return $this->resMsg(["error" => "Announcement date must be before " . $competition_rules['max_competition_days'] . " days."], "validation", 400);
@@ -174,14 +201,22 @@ class CompetitionController extends BaseController
             $competition->update([
                 "category_id" => $request->category_id,
                 "title" => $request->title,
+                "paid" => (int) $request->entry_fee > 0,
                 "description" => $request->description,
                 "slug" => $slug_matches ? Str::slug($request->title) . "-" . ($slug_matches + 1) : Str::slug($request->title),
-                "cost" => $this->calculateCompetitionCost($request->participants_allowed),
-                "entry_fee" => $request->entry_fee,
-                "prize_money" => $request->prize_money,
                 "participants_allowed" => $request->participants_allowed,
                 "announcement_at" => date("Y-m-d H:i:s", strtotime($request->announcement_at)),
                 "voting_start_at" => date("Y-m-d H:i:s", strtotime($request->voting_start_at)),
+            ]);
+
+            $cost = $this->calculateCompetitionCost($request->participants_allowed);
+            $total = $cost + (float) $request->prize_money + (float) $competition_rules["platform_charges"];
+            $competition->financial->update([
+                "cost" => (float) $cost,
+                "entry_fee" => (float) $request->entry_fee,
+                "prize_money" => (float) $request->prize_money,
+                "total" => (float) $total,
+                "platform_charges" => $competition_rules["platform_charges"],
             ]);
 
             DB::commit();
