@@ -44,6 +44,7 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         // Competitions
         Route::get("competitions", "CompetitionController@all");
         Route::post("competitions", "CompetitionController@store");
+        Route::post("competitions/calculate_financials", "CompetitionController@calculate_financials");
         Route::post("competitions/{competition}/publish", "CompetitionController@publish");
         Route::post("competitions/{competition}/participate", "CompetitionController@participate");
         Route::put("competitions/{competition}", "CompetitionController@update");

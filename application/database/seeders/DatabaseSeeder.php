@@ -64,13 +64,17 @@ class DatabaseSeeder extends Seeder
             "category_id" => $category1->id,
             "title" => "Sargodha Cars Competition",
             "slug" => "sargodha-cars-competition",
-            "cost" => 5000,
-            "entry_fee" => 100,
-            "prize_money" => 5000,
             "participants_allowed" => 500,
             "announcement_at" => date_format($faker->dateTimeBetween("now", "+14 days"), "Y-m-d H:i:s"),
             "voting_start_at" => date_format($faker->dateTimeBetween("now", "+3 days"), "Y-m-d H:i:s"),
             "published_at" => date_format($faker->dateTimeBetween("now"), "Y-m-d H:i:s"),
+        ]);
+        $competition1->financial()->create([
+            "cost" => 5000,
+            "total" => 10000,
+            "entry_fee" => 100,
+            "platform_charges" => 150,
+            "prize_money" => 5000,
         ]);
 
         // make a payment
@@ -78,7 +82,7 @@ class DatabaseSeeder extends Seeder
             'competition_id' => $competition1->id,
             'method_id' => $payment_method1->id,
             'title' => $organizer->username . " paid competition hosting fee",
-            'amount' => $competition1->cost
+            'amount' => $competition1->financial->cost
         ]);
         // make user an organizer if he is not
         if ($organizer->type !== "organizer") {
@@ -97,7 +101,7 @@ class DatabaseSeeder extends Seeder
             'competition_id' => $competition1->id,
             'method_id' => $payment_method1->id,
             'title' => $organizer->username . " paid competition participating fee",
-            'amount' => $competition1->entry_fee
+            'amount' => $competition1->financial->entry_fee
         ]);
         $ledger2 = $organizer->ledgers()->create([ // update ledger
             'payment_id' => $payment2->id,
@@ -114,20 +118,20 @@ class DatabaseSeeder extends Seeder
             'hidden' => 0,
             'approved_at' => date_format($faker->dateTimeBetween("now", "+1 days"), 'Y-m-d H:i:s')
         ]);
-        $post1->images()->createMany([ // post images
-            ['image' => "https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8Y2Fyc3xlbnwwfHwwfHw%3D&w=1000&q=80"],
-            ['image' => "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Y2Fyc3xlbnwwfHwwfHw%3D&w=1000&q=80"]
+        $post1->media()->createMany([ // post images
+            ['media' => "https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8Y2Fyc3xlbnwwfHwwfHw%3D&w=1000&q=80"],
+            ['media' => "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Y2Fyc3xlbnwwfHwwfHw%3D&w=1000&q=80"]
         ]);
 
         // voter can vote
         $voter->votes()->create(['competition_id' => $competition1->id, 'post_id' => $post1->id,]);
 
         // competition has a discussion
-        $comment1 = $voter->competition_comments()->create(["text" => "I have a query about this competition!", 'competition_id' => $competition1->id]);
-        $comment1->replies()->create(["text" => "Yes, you can ask..", 'user_id' => $organizer->id, "type" => "reply", 'competition_id' => $competition1->id]);
-        $comment1->replies()->create(["text" => "Nothing.", 'user_id' => $voter->id, "type" => "reply", 'competition_id' => $competition1->id]);
+        $comment1 = $voter->post_comments()->create(["text" => "I have a query about this competition!", 'post_id' => $post1->id]);
+        $comment1->replies()->create(["text" => "Yes, you can ask..", 'user_id' => $organizer->id, "type" => "reply", 'post_id' => $post1->id]);
+        $comment1->replies()->create(["text" => "Nothing.", 'user_id' => $voter->id, "type" => "reply", 'post_id' => $post1->id]);
 
-        $comment2 = $participant->competition_comments()->create(["text" => "Guys! come on vote me", 'competition_id' => $competition1->id]);
-        $comment2->replies()->create(["text" => "Good luck for he voting", 'user_id' => $organizer->id, "type" => "reply", 'competition_id' => $competition1->id]);
+        $comment2 = $participant->post_comments()->create(["text" => "Guys! come on vote me", 'post_id' => $post1->id]);
+        $comment2->replies()->create(["text" => "Good luck for he voting", 'user_id' => $organizer->id, "type" => "reply", 'post_id' => $post1->id]);
     }
 }

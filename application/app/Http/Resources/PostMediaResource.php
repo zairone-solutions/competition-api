@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources;
 
-class PostImageResource extends BaseResource
+class PostMediaResource extends BaseResource
 {
     /**
      * Transform the resource into an array.
@@ -14,7 +14,10 @@ class PostImageResource extends BaseResource
     {
         return [
             'id' => $this->id,
-            'url' => $this->image
+            'url' => $this->media,
+            'thumbnail' => $this->thumbnail,
+            'type' => $this->type,
+            'mime' => $this->mime,
         ];
     }
 }

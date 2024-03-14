@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePostImagesTable extends Migration
+class CreatePostVotesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,13 @@ class CreatePostImagesTable extends Migration
      */
     public function up()
     {
-        Schema::create('post_images', function (Blueprint $table) {
+        Schema::create('post_votes', function (Blueprint $table) {
             $table->bigIncrements("id");
             $table->foreignId("post_id")->constrained("posts")->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId("competition_id")->constrained("competitions")->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId("voter_id")->nullable()->constrained("users")->cascadeOnUpdate()->nullOnDelete();
 
-            $table->text("image");
-            $table->boolean("approved")->default(0);
-            $table->string("mime_type", 50)->default("jpg");
+            $table->timestamps();
         });
     }
 
@@ -30,6 +30,6 @@ class CreatePostImagesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('post_images');
+        Schema::dropIfExists('post_votes');
     }
 }

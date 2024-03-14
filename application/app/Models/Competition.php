@@ -20,9 +20,6 @@ class Competition extends Model
         "title",
         "description",
         "slug",
-        "cost",
-        "entry_fee",
-        "prize_money",
         "participants_allowed",
         "announcement_at",
         "voting_start_at",
@@ -46,6 +43,10 @@ class Competition extends Model
     {
         return $this->belongsTo(User::class, "organizer_id");
     }
+    public function financial()
+    {
+        return $this->hasOne(CompetitionFinancial::class);
+    }
     public function posts()
     {
         return $this->hasMany(Post::class);
@@ -61,9 +62,5 @@ class Competition extends Model
     public function participants()
     {
         return $this->hasMany(CompetitionParticipant::class, "competition_id");
-    }
-    public function comments()
-    {
-        return $this->hasMany(CompetitionComment::class);
     }
 }
