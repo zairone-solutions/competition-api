@@ -244,9 +244,9 @@ class AuthController extends BaseController
             Auth::login($user);
 
             // auth()->user()->tokens()->delete();
-            $token = auth()->user()->createToken('auth_token', $request->get("deviceModel") ?? NULL, [$user->type]);
+            $token = $user->createToken('auth_token', $request->get("deviceModel") ?? NULL, [$user->type]);
 
-            return $this->resData(["user" => AuthUserResource::make(auth()->user()), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
+            return $this->resData(["user" => AuthUserResource::make($user), 'access_token' => $token->plainTextToken, 'token_type' => 'Bearer']);
         } catch (\Throwable $th) {
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
         }
