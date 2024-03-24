@@ -32,6 +32,10 @@ class Competition extends Model
     {
         return $this->published_at;
     }
+    public function isExpired()
+    {
+        return strtotime($this->announcement_at) < time();
+    }
     // scopes
     public function scopePublished($query)
     {

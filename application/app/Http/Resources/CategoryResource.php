@@ -16,6 +16,7 @@ class CategoryResource extends BaseResource
             'id' => $this->id,
             'title' => $this->title,
             'slug' => $this->slug,
+            'verified' => $this->verified == 1,
             'suggested_by' => $this->suggest_id ? UserResource::make($this->suggested_by) : null
         ];
     }

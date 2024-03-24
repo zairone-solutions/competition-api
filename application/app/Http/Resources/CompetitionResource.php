@@ -2,6 +2,9 @@
 
 namespace App\Http\Resources;
 
+use App\Helpers\CompetitionHelper;
+use App\Models\Competition;
+
 class CompetitionResource extends BaseResource
 {
     /**
@@ -18,10 +21,11 @@ class CompetitionResource extends BaseResource
             "title" => $this->title,
             "description" => $this->description,
             "slug" => $this->slug,
+            "paid" => $this->paid == "1",
             "financials" => [
-                "entry_fee" => number_format($this->financial->entry_fee),
-                "prize_money" => number_format($this->financial->prize_money),
-                "total_amount" => number_format($this->financial->total),
+                "entry_fee" => ($this->financial->entry_fee),
+                "prize_money" => ($this->financial->prize_money),
+                "total_amount" => ($this->financial->total),
             ],
             "participations" => $this->participants()->count(),
             "participants_allowed" => $this->participants_allowed,
@@ -29,6 +33,7 @@ class CompetitionResource extends BaseResource
             "voting_time" => date("H:i", strtotime($this->voting_start_at)),
             "announcement_at" => date("M d, Y", strtotime($this->announcement_at)),
             "announcement_time" => date("H:i", strtotime($this->announcement_at)),
+            "stage" => CompetitionHelper::getStage(Competition::find($this->id)),
             "expired" => strtotime($this->announcement_at) < time(),
             'category' => CategoryResource::make($this->category),
             "organizer" => UserResource::make($this->organizer),

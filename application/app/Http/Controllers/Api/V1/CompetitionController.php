@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\RuleHelper;
 use App\Http\Resources\CompetitionCommentResource;
+use App\Http\Resources\CompetitionOrganizerResource;
 use App\Http\Resources\CompetitionResource;
 use App\Jobs\CompetitionParticipatedJob;
 use App\Jobs\CompetitionPublishedJob;
@@ -12,6 +13,7 @@ use App\Mail\Competition\CompetitionParticipationAlert;
 use App\Mail\Competition\CompetitionPublished;
 use App\Models\Competition;
 use App\Models\CompetitionComment;
+use App\Models\PostComment;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -72,10 +74,10 @@ class CompetitionController extends BaseController
                 case 'participated':
                     return $this->resData(CompetitionResource::collection($this->participated()));
                 case 'organized':
-                    return $this->resData(CompetitionResource::collection(auth()->user()->competitions()->get()));
+                    return $this->resData(CompetitionOrganizerResource::collection(auth()->user()->competitions()->get()));
                 default:
                     return $this->resData([
-                        'organized' => CompetitionResource::collection(auth()->user()->competitions()->get()),
+                        'organized' => CompetitionOrganizerResource::collection(auth()->user()->competitions()->get()),
                         'participated' => CompetitionResource::collection($this->participated()),
                         'voted' => CompetitionResource::collection($this->voted())
                     ]);
@@ -148,7 +150,7 @@ class CompetitionController extends BaseController
 
             DB::commit();
 
-            return $this->resData(CompetitionResource::make($competition));
+            return $this->resData(CompetitionOrganizerResource::make($competition));
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
@@ -168,6 +170,7 @@ class CompetitionController extends BaseController
                     return $query->where(['id' => $request->category_id, "verified" => 1]);
                 }),],
                 'title' => ["required", "max:50", "min:3", "bad_word"],
+                'slug' => ["required", "unique:competitions,slug," . $competition->id, "max:100", "min:3", "regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/", "bad_word"],
                 'description' => ["nullable", "max:450", "bad_word"],
                 'entry_fee' => ["required", "numeric", "min:" . $competition_rules["min_entry_fee"], "max:" . $competition_rules["max_prize_money"]],
                 'prize_money' => ["required", "numeric", "min:" . $competition_rules["min_prize_money"], "max:" . $competition_rules["max_prize_money"]],
@@ -177,6 +180,8 @@ class CompetitionController extends BaseController
             ];
             $errors = $this->reqValidate($request->all(), $rules, [
                 'category_id.exists' => "Invalid category.",
+                "slug.regex" => "Hashtag format is not valid.",
+                "slug.unique" => "The #hashtag has already been taken.",
                 'bad_word' => 'The :attribute cannot contain any inappropriate word.',
                 'voting_start_at.after_or_equal' => "The voting date must be after {$competition_rules['voting_delay_days']} days from today.",
                 'announcement_at.after_or_equal' => "The announcement date must be {$competition_rules['min_competition_days']} days after starting the competition.",
@@ -194,16 +199,16 @@ class CompetitionController extends BaseController
                 return $this->resMsg(["error" => "Voting date must be after " . $competition_rules['voting_delay_days'] . " days."], "validation", 400);
             }
 
-            $slug_matches = Competition::where("slug", Str::slug($request->title))->where("id", "!=", $competition->id)->count();
+            // $slug_matches = Competition::where("slug", $request->slug)->where("id", "!=", $competition->id)->count();
 
             DB::beginTransaction();
 
             $competition->update([
                 "category_id" => $request->category_id,
                 "title" => $request->title,
-                "paid" => (int) $request->entry_fee > 0,
+                "paid" => (float) $request->entry_fee > 0,
                 "description" => $request->description,
-                "slug" => $slug_matches ? Str::slug($request->title) . "-" . ($slug_matches + 1) : Str::slug($request->title),
+                "slug" => $request->slug,
                 "participants_allowed" => $request->participants_allowed,
                 "announcement_at" => date("Y-m-d H:i:s", strtotime($request->announcement_at)),
                 "voting_start_at" => date("Y-m-d H:i:s", strtotime($request->voting_start_at)),
@@ -213,15 +218,15 @@ class CompetitionController extends BaseController
             $total = $cost + (float) $request->prize_money + (float) $competition_rules["platform_charges"];
             $competition->financial->update([
                 "cost" => (float) $cost,
+                "platform_charges" => $competition_rules["platform_charges"],
                 "entry_fee" => (float) $request->entry_fee,
                 "prize_money" => (float) $request->prize_money,
                 "total" => (float) $total,
-                "platform_charges" => $competition_rules["platform_charges"],
             ]);
 
             DB::commit();
 
-            return $this->resData(CompetitionResource::make($competition));
+            return $this->resData(CompetitionOrganizerResource::make($competition));
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
@@ -260,6 +265,28 @@ class CompetitionController extends BaseController
 
             DB::commit();
             return $this->resMsg(["success" => "Competition published successfully."]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
+
+    public function delete(Request $request, Competition $competition)
+    {
+        try {
+            if ($competition->isPublished() && !$competition->isExpired()) {
+                return $this->resMsg(["error" => "Published competition can not be deleted, wait for its completion."], "validation", 400);
+            }
+
+            DB::beginTransaction();
+
+            $competition->delete();
+
+            // Dispatch job
+            CompetitionPublishedJob::dispatch(auth()->user(), $competition);
+
+            DB::commit();
+            return $this->resMsg(["success" => "Competition deleted successfully."]);
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
@@ -348,7 +375,7 @@ class CompetitionController extends BaseController
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
         }
     }
-    public function comment_replies(Request $request, Competition $competition, CompetitionComment $competition_comment)
+    public function comment_replies(Request $request, Competition $competition, PostComment $competition_comment)
     {
         try {
             $rules = ['text' => "required|min:1|max:450|bad_word"];
