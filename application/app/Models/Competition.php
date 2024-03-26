@@ -41,7 +41,6 @@ class Competition extends Model
     {
         return $query->whereNotNull('published_at');
     }
-
     // relations
     public function organizer()
     {
@@ -65,6 +64,10 @@ class Competition extends Model
     }
     public function participants()
     {
-        return $this->hasMany(CompetitionParticipant::class, "competition_id");
+        return $this->hasMany(CompetitionParticipant::class);
+    }
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 }

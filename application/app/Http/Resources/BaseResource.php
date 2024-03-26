@@ -43,43 +43,75 @@ class BaseResource extends JsonResource
     public function time2str($ts)
     {
         $output = array();
-        if (!ctype_digit($ts))
-            $ts = strtotime($ts);
 
+        // Ensure timestamp format
+        if (!ctype_digit($ts)) {
+            $ts = strtotime($ts);
+        }
+
+        // Calculate difference in seconds
         $diff = time() - $ts;
-        if ($diff == 0)
+
+        if ($diff == 0) {
             $output['relative'] = 'now';
-        elseif ($diff > 0) {
+        } elseif ($diff > 0) {
+            // Time in the past
             $day_diff = floor($diff / 86400);
+
             if ($day_diff == 0) {
-                if ($diff < 60) $output['relative'] = 'just now';
-                if ($diff < 120) $output['relative'] = '1 min';
-                if ($diff < 3600) $output['relative'] = floor($diff / 60) . ' mins';
-                if ($diff < 7200) $output['relative'] = '1 hr';
-                if ($diff < 86400) $output['relative'] = floor($diff / 3600) . ' hrs';
+                // Handle within today
+                $hours = floor($diff / 3600);
+                $minutes = floor(($diff % 3600) / 60);
+                if ($minutes < 1) {
+                    $output['relative'] = 'just now';
+                } elseif ($minutes == 1) {
+                    $output['relative'] = '1 min ago';
+                } elseif ($minutes < 60) {
+                    $output['relative'] = $minutes . ' mins ago';
+                } elseif ($hours == 1) {
+                    $output['relative'] = '1 hr ago';
+                } elseif ($hours < 48) { // Limit "hours ago" to 2 days
+                    $output['relative'] = $hours . ' hrs ago';
+                } else {
+                    $output['relative'] = date('Y-m-d', $ts); // Show full date if over 2 days
+                }
+            } elseif ($day_diff == 1) {
+                $output['relative'] = 'Yesterday';
+            } elseif ($day_diff < 7) {
+                $output['relative'] = $day_diff . ' days ago';
+            } elseif ($day_diff < 31) {
+                $output['relative'] = 'last month'; // Adjust for clarity
+            } else {
+                $output['relative'] = date('F Y', $ts);
             }
-            if ($day_diff == 1) $output['relative'] = 'Yesterday';
-            if ($day_diff < 7) $output['relative'] = $day_diff . ' days';
-            if ($day_diff < 31) $output['relative'] = ceil($day_diff / 7) . ' weeks';
-            if ($day_diff < 60) $output['relative'] = 'last month';
-            $output['relative'] = date('F Y', $ts);
         } else {
+            // Time in the future
             $diff = abs($diff);
             $day_diff = floor($diff / 86400);
+
             if ($day_diff == 0) {
-                if ($diff < 120) $output['relative'] = 'in a min';
-                if ($diff < 3600) $output['relative'] = 'in ' . floor($diff / 60) . ' mins';
-                if ($diff < 7200) $output['relative'] = 'in an hr';
-                if ($diff < 86400) $output['relative'] = 'in ' . floor($diff / 3600) . ' hrs';
+                // Handle within today
+                $hours = floor($diff / 3600);
+                $minutes = floor(($diff % 3600) / 60);
+                if ($minutes < 2) { // Adjust for clarity
+                    $output['relative'] = 'in a min';
+                } else {
+                    $output['relative'] = 'in ' . floor($diff / 60) . ' mins';
+                }
+            } elseif ($day_diff == 1) {
+                $output['relative'] = 'Tomorrow';
+            } elseif ($day_diff < 7 + (7 - date('w'))) {
+                $output['relative'] = 'next week';
+            } elseif (ceil($day_diff / 7) < 4) {
+                $output['relative'] = 'in ' . ceil($day_diff / 7) . ' weeks';
+            } else {
+                $output['relative'] = date('F Y', $ts);
             }
-            if ($day_diff == 1) $output['relative'] = 'Tomorrow';
-            if ($day_diff < 4) $output['relative'] = date('l', $ts);
-            if ($day_diff < 7 + (7 - date('w'))) $output['relative'] = 'next week';
-            if (ceil($day_diff / 7) < 4) $output['relative'] = 'in ' . ceil($day_diff / 7) . ' weeks';
-            if (date('n', $ts) == date('n') + 1) $output['relative'] = 'next month';
-            $output['relative'] = date('F Y', $ts);
         }
-        $output['date'] = date("M d, Y", $ts);
+
+        // Include time in both cases
+        $output['date'] = date(config("constants.date.format"), $ts);
+
         return $output;
     }
 }

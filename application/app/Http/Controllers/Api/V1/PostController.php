@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\RuleHelper;
+use App\Http\Resources\PostCommentResource;
 use App\Http\Resources\PostImageResource;
 use App\Http\Resources\PostJustified;
 use App\Http\Resources\PostJustifiedResource;
@@ -20,6 +21,7 @@ use App\Mail\Post\PostReportAlert;
 use App\Mail\Post\PostVoteAlert;
 use App\Models\Competition;
 use App\Models\Post;
+use App\Models\PostComment;
 use App\Models\PostImage;
 use App\Models\Setting;
 use Illuminate\Http\Request;
@@ -288,7 +290,7 @@ class PostController extends BaseController
     public function object(Request $request, Competition $competition, Post $post)
     {
         if (strtotime($competition->voting_start_at) < time()) {
-            return $this->resMsg(["error" => "Objections can only be made before the voting starts."], "validation", 400);
+            return $this->resMsg(["error" => "Objections can only be made before the voting starts."], "validation", 403);
         }
         $rules = ["description" => ["required", "min:6", "max:450", "bad_word"]];
         $errors = $this->reqValidate($request->all(), $rules, ['description.required' => "You must provide the reason.", 'bad_word' => 'The :attribute cannot contain any inappropriate word.',]);
@@ -310,7 +312,7 @@ class PostController extends BaseController
             return $this->resMsg(["error" => "Your vote has already been casted."], "authentication", 400);
         }
         if (strtotime($competition->announcement_at) < time()) {
-            return $this->resMsg(["error" => "Competition already announced!"], "validation", 400);
+            return $this->resMsg(["error" => "Competition already announced!"], "validation", 403);
         }
 
         $vote = $post->votes()->create(['competition_id' => $competition->id, "voter_id" => auth()->user()->id]);
@@ -338,5 +340,101 @@ class PostController extends BaseController
         $this->triggerNotification($post->user->id, $post->user->notification_token, "Post Reported!", 'reported', auth()->user()->username . " has reported a post in " .  $this->cName($competition->slug) . ".", ['id' => $report->id]);
 
         return $this->resData(PostReportResource::make($report));
+    }
+
+
+
+    public function comments_all(Request $request, Post $post)
+    {
+        try {
+            if (auth()->user()->id == $post->organizer_id)
+                $comments = PostCommentResource::collection($post->comments()->coms()->default()->paginate(15));
+            else
+                $comments = PostCommentResource::collection($post->comments()->coms()->visible()->default()->paginate(15));
+
+            return $this->resData($comments);
+        } catch (\Throwable $th) {
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
+    public function comment_replies_all(Request $request, Post $post, PostComment $post_comment)
+    {
+        try {
+            if (auth()->user()->id == $post->organizer_id)
+                $replies = PostCommentResource::collection($post_comment->replies()->default()->paginate(15));
+            else {
+                if ($post_comment->hidden) {
+                    return $this->resMsg(["error" => "Replies of hidden comments can not be shown."], "validation", 403);
+                }
+                $replies = PostCommentResource::collection($post_comment->replies()->visible()->default()->paginate(15));
+            }
+            return $this->resData($replies);
+        } catch (\Throwable $th) {
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
+    public function comments_store(Request $request, Post $post)
+    {
+        try {
+            $rules = ['text' => "required|min:1|max:450|bad_word"];
+            $errors = $this->reqValidate($request->all(), $rules, ['bad_word' => 'The :attribute cannot contain any inappropriate word.']);
+            if ($errors) return $errors;
+
+            DB::beginTransaction();
+
+            $reply = auth()->user()->competition_comments()->create([
+                "competition_id" => $post->id,
+                "text" => $request->text,
+            ]);
+
+            DB::commit();
+
+            return $this->resData(PostCommentResource::make($reply));
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
+    public function comment_replies(Request $request, Post $post, PostComment $post_comment)
+    {
+        try {
+            $rules = ['text' => "required|min:1|max:450|bad_word"];
+            $errors = $this->reqValidate($request->all(), $rules, ['bad_word' => 'The :attribute cannot contain any inappropriate word.']);
+            if ($errors) return $errors;
+
+            DB::beginTransaction();
+
+            $reply = auth()->user()->competition_comments()->create([
+                "competition_id" => $post->id,
+                "comment_id" => $post_comment->id,
+                "type" => "reply",
+                "text" => $request->text,
+            ]);
+            DB::commit();
+
+            return $this->resData(PostCommentResource::make($reply));
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
+    public function comment_update(Request $request, Post $post, PostComment $post_comment)
+    {
+        try {
+            if (auth()->user()->id !== $post->organizer_id) {
+                return $this->resMsg(["error" => "Only organizer can update a comment."], "authentication", 400);
+            }
+
+            DB::beginTransaction();
+
+            $post_comment->update($request->only(["hidden"]));
+
+            DB::commit();
+
+            return $this->resData(PostCommentResource::make($post_comment));
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
     }
 }

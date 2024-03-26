@@ -56,8 +56,9 @@ class DatabaseSeeder extends Seeder
         $category2 = Category::create(['title' => 'Fashion', 'slug' => 'fashion', 'verified' => 1]);
 
         // create payment methods
-        $payment_method1 = PaymentMethod::create(['title' => "Easypaisa", 'code' => "EP", 'credentials' => serialize(['mobile_no' => "03061245658"])]);
-        $payment_method2 = PaymentMethod::create(['title' => "Credit Card", 'code' => "CC", 'credentials' => serialize(['IBAN' => "03061245658"])]);
+        $payment_method1 = PaymentMethod::create(['title' => "Easypaisa", 'code' => "EP", 'credentials' => json_encode(['mobile_no' => "03061245658"])]);
+        $payment_method2 = PaymentMethod::create(['title' => "JazzCash", 'code' => "JC", 'credentials' => json_encode(['mobile_no' => "03061245658"])]);
+        $payment_method3 = PaymentMethod::create(['title' => "Card", 'code' => "CC", 'credentials' => json_encode(['IBAN' => "DE68500105178297336485"])]);
 
         // create a competition
         $competition1 = $organizer->competitions()->create([
@@ -65,7 +66,7 @@ class DatabaseSeeder extends Seeder
             "title" => "Sargodha Cars Competition",
             "slug" => "sargodha-cars-competition",
             "participants_allowed" => 500,
-            "announcement_at" => date_format($faker->dateTimeBetween("now", "+14 days"), "Y-m-d H:i:s"),
+            "announcement_at" => date_format($faker->dateTimeBetween("+3 days", "+14 days"), "Y-m-d H:i:s"),
             "voting_start_at" => date_format($faker->dateTimeBetween("now", "+3 days"), "Y-m-d H:i:s"),
             "published_at" => date_format($faker->dateTimeBetween("now"), "Y-m-d H:i:s"),
         ]);
@@ -84,10 +85,13 @@ class DatabaseSeeder extends Seeder
             'title' => $organizer->username . " paid competition hosting fee",
             'amount' => $competition1->financial->cost
         ]);
+        $payment1->update(["verified_at" => date_format($faker->dateTimeBetween("now"), "Y-m-d H:i:s")]);
+
         // make user an organizer if he is not
         if ($organizer->type !== "organizer") {
             $organizer->update(['type' => 'organizer']);
         }
+
         // also update the ledger
         $ledger1 = $organizer->ledgers()->create([
             'payment_id' => $payment1->id,
@@ -103,6 +107,8 @@ class DatabaseSeeder extends Seeder
             'title' => $organizer->username . " paid competition participating fee",
             'amount' => $competition1->financial->entry_fee
         ]);
+        $payment2->update(["verified_at" => date_format($faker->dateTimeBetween("now"), "Y-m-d H:i:s")]);
+
         $ledger2 = $organizer->ledgers()->create([ // update ledger
             'payment_id' => $payment2->id,
             'title' => $payment2->title,

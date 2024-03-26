@@ -8,4 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class Ledger extends Model
 {
     use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'payment_id',
+        'user_id',
+        'title',
+        'amount',
+        'type',
+    ];
 }

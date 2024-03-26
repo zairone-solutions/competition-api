@@ -42,5 +42,4 @@ class PostComment extends Model
     {
         return $this->hasMany(self::class, 'comment_id');
     }
-
 }

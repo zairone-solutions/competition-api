@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Helpers\CompetitionHelper;
 use App\Models\Competition;
+use Illuminate\Support\Facades\DB;
 
 class CompetitionOrganizerResource extends BaseResource
 {
@@ -15,6 +16,7 @@ class CompetitionOrganizerResource extends BaseResource
      */
     public function toArray($request)
     {
+
         $data = [
             "id" => $this->id,
             "title" => $this->title,
@@ -39,6 +41,7 @@ class CompetitionOrganizerResource extends BaseResource
             'category' => CategoryResource::make($this->category),
             "organizer" => UserResource::make($this->organizer),
             "winner" => UserResource::make($this->winner),
+            "payment" => CompetitionPaymentResource::make($this->payments()->byOrganizer($this->organizer_id)->verified()->first()),
         ];
 
         return $data;

@@ -49,6 +49,7 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         Route::post("competitions/{competition}/participate", "CompetitionController@participate");
         Route::put("competitions/{competition}", "CompetitionController@update");
         Route::delete("competitions/{competition}", "CompetitionController@delete");
+        Route::post("competitions/{competition}/verify_dates", "CompetitionController@verify_dates");
         // Competition Comments
         Route::get("competitions/{competition}/comments", "CompetitionController@comments_all");
         Route::get("competitions/{competition}/comments/{competition_comment}", "CompetitionController@comment_replies_all");
@@ -78,6 +79,12 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         // Organizer
         Route::get("organizer/reports", "OrganizerController@reports")->middleware(['ability:organizer']);
         Route::post("organizer/clear_report_toggle/{post_report}", "OrganizerController@clear_report_toggle")->middleware(['ability:organizer']);
+
+        // Payments
+        Route::get("payments/all_methods", "PaymentController@all");
+        Route::post("payments/competition/card", "PaymentController@card_competition");
+        Route::post("payments/competition/easypaisa", "PaymentController@easy_paisa_competition");
+        Route::post("payments/competition/jazzcash", "PaymentController@jazz_cash_competition");
     });
     Route::post("test_login", "Controller@test_login");
     Route::get("test", "Controller@test");

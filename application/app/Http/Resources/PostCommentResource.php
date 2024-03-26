@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources;
 
-class CompetitionCommentResource extends BaseResource
+class PostCommentResource extends BaseResource
 {
 
     /**

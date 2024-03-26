@@ -7,19 +7,21 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class CompetitionPublished extends Mailable
+class CompetitionPaymentSuccess extends Mailable
 {
     use Queueable, SerializesModels;
+    private $content;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($competition)
+    public function __construct($competition, $payment)
     {
         $this->data['competition'] = $competition;
-        $this->data['title'] = "Competition Published";
+        $this->data['payment'] = $payment;
+        $this->data["title"] = "Payment Successful";
     }
 
     /**
@@ -29,6 +31,6 @@ class CompetitionPublished extends Mailable
      */
     public function build()
     {
-        return $this->subject("Competition Published Successfully!")->markdown('emails.competition.published')->with('data', $this->data);
+        return $this->subject("Competition Payment Success!")->markdown('emails.competition.payment_success')->with('data', $this->data);
     }
 }
