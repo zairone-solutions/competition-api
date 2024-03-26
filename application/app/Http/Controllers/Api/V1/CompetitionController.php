@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\RuleHelper;
-use App\Http\Resources\CompetitionCommentResource;
 use App\Http\Resources\CompetitionOrganizerResource;
 use App\Http\Resources\CompetitionResource;
 use App\Jobs\CompetitionParticipatedJob;
@@ -159,7 +158,7 @@ class CompetitionController extends BaseController
     public function update(Request $request, Competition $competition)
     {
         try {
-            if ($competition->published_at) {
+            if ($competition->isPublished()) {
                 return $this->resMsg(["error" => "Published competition can not be edited."], "authentication", 400);
             }
 
@@ -190,13 +189,13 @@ class CompetitionController extends BaseController
             if ($errors) return $errors;
             // time validations
             if (strtotime($request->announcement_at) > strtotime("+" . $competition_rules['max_competition_days'] . " days")) {
-                return $this->resMsg(["error" => "Announcement date must be before " . $competition_rules['max_competition_days'] . " days."], "validation", 400);
+                return $this->resMsg(["error" => "Announcement date must be before " . $competition_rules['max_competition_days'] . " days."], "validation", 403);
             }
             if (strtotime($request->announcement_at) < strtotime("+" . $competition_rules['min_competition_days'] . " days")) {
-                return $this->resMsg(["error" => "Announcement date must be after " . $competition_rules['min_competition_days'] . " days."], "validation", 400);
+                return $this->resMsg(["error" => "Announcement date must be after " . $competition_rules['min_competition_days'] . " days."], "validation", 403);
             }
             if (strtotime($request->voting_start_at) < (strtotime($request->voting_start_at))) {
-                return $this->resMsg(["error" => "Voting date must be after " . $competition_rules['voting_delay_days'] . " days."], "validation", 400);
+                return $this->resMsg(["error" => "Voting date must be after " . $competition_rules['voting_delay_days'] . " days."], "validation", 403);
             }
 
             // $slug_matches = Competition::where("slug", $request->slug)->where("id", "!=", $competition->id)->count();
@@ -232,26 +231,61 @@ class CompetitionController extends BaseController
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
         }
     }
+    public function verify_dates(Request $request, Competition $competition)
+    {
+        try {
+            if ($competition->isPublished()) {
+                return $this->resMsg(["error" => "Published competition can not be edited."], "validation", 403);
+            }
+
+            $competition_rules = RuleHelper::rules("competition");
+
+            $rules = [
+                "announcement_at" => ["required", "after_or_equal:" .  $competition_rules['min_competition_days'] . " days", "before_or_equal:" . $competition_rules['max_competition_days'] . " days"],
+                "voting_start_at" => ["required", "after_or_equal:" .  $competition_rules['voting_delay_days'] . " days"],
+            ];
+            $errors = $this->reqValidate($request->all(), $rules, [
+                'voting_start_at.after_or_equal' => "The voting date must be after {$competition_rules['voting_delay_days']} days from today.",
+                'announcement_at.after_or_equal' => "The announcement date must be {$competition_rules['min_competition_days']} days after starting the competition.",
+                'announcement_at.before_or_equal' => "The announcement date must be {$competition_rules['max_competition_days']} days from now."
+            ]);
+            if ($errors) return $errors;
+            // time validations
+            if (strtotime($request->announcement_at) > strtotime("+" . $competition_rules['max_competition_days'] . " days")) {
+                return $this->resMsg(["error" => "Announcement date must be before " . $competition_rules['max_competition_days'] . " days."], "validation", 403);
+            }
+            if (strtotime($request->announcement_at) < strtotime("+" . $competition_rules['min_competition_days'] . " days")) {
+                return $this->resMsg(["error" => "Announcement date must be after " . $competition_rules['min_competition_days'] . " days."], "validation", 403);
+            }
+            if (strtotime($request->voting_start_at) < (strtotime($request->voting_start_at))) {
+                return $this->resMsg(["error" => "Voting date must be after " . $competition_rules['voting_delay_days'] . " days."], "validation", 403);
+            }
+
+            return $this->resData(CompetitionOrganizerResource::make($competition));
+        } catch (\Throwable $th) {
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
     public function publish(Request $request, Competition $competition)
     {
         try {
             $competition_rules = RuleHelper::rules("competition");
-
-            if (auth()->user()->id !== $competition->organizer_id) {
-                return $this->resMsg(["error" => "Only organizer can publish a competition."], "validation", 400);
+            $user = auth()->user();
+            if ($user->id !== $competition->organizer_id) {
+                return $this->resMsg(["error" => "Only organizer can publish a competition."], "validation", 403);
             }
             if (!$competition->payment_verified_at) {
-                return $this->resMsg(["error" => "Payment not verified yet."], "validation", 400);
+                return $this->resMsg(["error" => "Payment not verified yet."], "validation", 403);
             }
             if ($competition->isPublished()) {
-                return $this->resMsg(["error" => "Competition already published."], "validation", 400);
+                return $this->resMsg(["error" => "Competition already published."], "validation", 403);
             }
 
-            if (strtotime($competition->voting_start_at) <= (strtotime('now') + (((int) $competition_rules['voting_delay_days'] + 1) * 24 * 60 * 60))) {
-                return $this->resMsg(["error" => "Voting date must be after " . $competition_rules['voting_delay_days'] . " days. Please update to publish."], "validation", 400);
+            if (strtotime($competition->voting_start_at) <= (strtotime('now') + (((int) $competition_rules['voting_delay_days']) * 24 * 60 * 60))) {
+                return $this->resMsg(["error" => "Voting date must be after " . $competition_rules['voting_delay_days'] . " days from today. Please update to publish."], "validation", 403);
             }
             if (strtotime($competition->announcement_at) <= (strtotime('now') + ((int) $competition_rules['min_competition_days']  * 24 * 60 * 60))) {
-                return $this->resMsg(["error" => "Announcement date must be after " . $competition_rules['min_competition_days'] . " days. Please update to publish."], "validation", 400);
+                return $this->resMsg(["error" => "Announcement date must be after " . $competition_rules['min_competition_days'] . " days from today. Please update to publish."], "validation", 403);
             }
 
             $competition->published_at = date("Y-m-d H:i:s", strtotime("now"));
@@ -261,7 +295,7 @@ class CompetitionController extends BaseController
             $competition->update();
 
             // Dispatch job
-            CompetitionPublishedJob::dispatch(auth()->user(), $competition);
+            CompetitionPublishedJob::dispatch($user, $competition);
 
             DB::commit();
             return $this->resMsg(["success" => "Competition published successfully."]);
@@ -275,7 +309,7 @@ class CompetitionController extends BaseController
     {
         try {
             if ($competition->isPublished() && !$competition->isExpired()) {
-                return $this->resMsg(["error" => "Published competition can not be deleted, wait for its completion."], "validation", 400);
+                return $this->resMsg(["error" => "Published competition can not be deleted, wait for its completion."], "validation", 403);
             }
 
             DB::beginTransaction();
@@ -318,100 +352,6 @@ class CompetitionController extends BaseController
             DB::commit();
 
             return $this->resMsg(["success" => "You have participated successfully."]);
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
-        }
-    }
-
-    public function comments_all(Request $request, Competition $competition)
-    {
-        try {
-            if (auth()->user()->id == $competition->organizer_id)
-                $comments = CompetitionCommentResource::collection($competition->comments()->coms()->default()->paginate(15));
-            else
-                $comments = CompetitionCommentResource::collection($competition->comments()->coms()->visible()->default()->paginate(15));
-
-            return $this->resData($comments);
-        } catch (\Throwable $th) {
-            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
-        }
-    }
-    public function comment_replies_all(Request $request, Competition $competition, CompetitionComment $competition_comment)
-    {
-        try {
-            if (auth()->user()->id == $competition->organizer_id)
-                $replies = CompetitionCommentResource::collection($competition_comment->replies()->default()->paginate(15));
-            else {
-                if ($competition_comment->hidden) {
-                    return $this->resMsg(["error" => "Replies of hidden comments can not be shown."], "validation", 400);
-                }
-                $replies = CompetitionCommentResource::collection($competition_comment->replies()->visible()->default()->paginate(15));
-            }
-            return $this->resData($replies);
-        } catch (\Throwable $th) {
-            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
-        }
-    }
-    public function comments_store(Request $request, Competition $competition)
-    {
-        try {
-            $rules = ['text' => "required|min:1|max:450|bad_word"];
-            $errors = $this->reqValidate($request->all(), $rules, ['bad_word' => 'The :attribute cannot contain any inappropriate word.']);
-            if ($errors) return $errors;
-
-            DB::beginTransaction();
-
-            $reply = auth()->user()->competition_comments()->create([
-                "competition_id" => $competition->id,
-                "text" => $request->text,
-            ]);
-
-            DB::commit();
-
-            return $this->resData(CompetitionCommentResource::make($reply));
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
-        }
-    }
-    public function comment_replies(Request $request, Competition $competition, PostComment $competition_comment)
-    {
-        try {
-            $rules = ['text' => "required|min:1|max:450|bad_word"];
-            $errors = $this->reqValidate($request->all(), $rules, ['bad_word' => 'The :attribute cannot contain any inappropriate word.']);
-            if ($errors) return $errors;
-
-            DB::beginTransaction();
-
-            $reply = auth()->user()->competition_comments()->create([
-                "competition_id" => $competition->id,
-                "comment_id" => $competition_comment->id,
-                "type" => "reply",
-                "text" => $request->text,
-            ]);
-            DB::commit();
-
-            return $this->resData(CompetitionCommentResource::make($reply));
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
-        }
-    }
-    public function comment_update(Request $request, Competition $competition, CompetitionComment $competition_comment)
-    {
-        try {
-            if (auth()->user()->id !== $competition->organizer_id) {
-                return $this->resMsg(["error" => "Only organizer can update a comment."], "authentication", 400);
-            }
-
-            DB::beginTransaction();
-
-            $competition_comment->update($request->only(["hidden"]));
-
-            DB::commit();
-
-            return $this->resData(CompetitionCommentResource::make($competition_comment));
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);

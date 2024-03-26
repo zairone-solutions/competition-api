@@ -14,7 +14,7 @@ class CreateLedgersTable extends Migration
     public function up()
     {
         Schema::create('ledgers', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements("id");
             $table->foreignId("user_id")->constrained("users")->cascadeOnUpdate()->cascadeOnUpdate();
             $table->foreignId("payment_id")->constrained("payments")->cascadeOnUpdate()->cascadeOnUpdate();
 

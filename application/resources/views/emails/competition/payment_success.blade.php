@@ -1,8 +1,9 @@
 @component('mail::message', ["title" => $data["title"]])
-### Hurray!,
+### Great!,
 <br>
 
-{{ $data['competition']['slug']  }} is live now! Share with friends and followers to get maximum participations.
+Your competition bill of <b>Rs.{{ $data['payment']['amount'] }}</b> has been paid.
+You can publish whenever you want. But make sure, you adjust the voting and announcement dates first.
 @component('mail::table')
 | | |
 | ------------------------ |:-------------------------------------------------------------: |

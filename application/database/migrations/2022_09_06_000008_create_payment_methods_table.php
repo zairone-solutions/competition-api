@@ -17,7 +17,10 @@ class CreatePaymentMethodsTable extends Migration
             $table->id();
             $table->string("title", 50);
             $table->string("code", 50);
-            $table->text("credentials");
+
+            $table->string("image")->nullable();
+            $table->boolean("active")->default(true);
+            $table->json("credentials")->nullable();
         });
     }
 

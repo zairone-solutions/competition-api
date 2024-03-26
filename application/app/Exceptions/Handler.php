@@ -69,6 +69,12 @@ class Handler extends ExceptionHandler
                     'error_type' => 'validation', 'messages' => 'Url entity does not exist.'
                 ], 404);
             }
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException) {
+                return response()->json([
+                    'error_type' => 'validation', 'messages' => 'Requested method not allowed.'
+                ], 405);
+            }
+
             if ($e instanceof \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException) {
                 return response()->json([
                     'error_type' => 'authorization', 'messages' => 'Invalid token ability.'
