@@ -118,9 +118,9 @@ class CompetitionController extends BaseController
             $errors = $this->reqValidate($request->all(), $rules, [
                 'category_id.exists' => "Invalid category.",
                 'bad_word' => 'The :attribute cannot contain any inappropriate word.',
-                'voting_start_at.after_or_equal' => "The voting date must be after {$competition_rules['voting_delay_days']} days from today.",
-                'announcement_at.after_or_equal' => "The announcement date must be {$competition_rules['min_competition_days']} days after starting the competition.",
-                'announcement_at.before_or_equal' => "The announcement date must be {$competition_rules['max_competition_days']} days from now."
+                'voting_start_at.after_or_equal' => "The voting must start after {$competition_rules['voting_delay_days']} days from today.",
+                'announcement_at.after_or_equal' => "The announcement must be {$competition_rules['min_competition_days']} days after starting the competition.",
+                'announcement_at.before_or_equal' => "The announcement must be {$competition_rules['max_competition_days']} days from now."
             ]);
             if ($errors) return $errors;
 
@@ -245,20 +245,20 @@ class CompetitionController extends BaseController
                 "voting_start_at" => ["required", "after_or_equal:" .  $competition_rules['voting_delay_days'] . " days"],
             ];
             $errors = $this->reqValidate($request->all(), $rules, [
-                'voting_start_at.after_or_equal' => "The voting date must be after {$competition_rules['voting_delay_days']} days from today.",
-                'announcement_at.after_or_equal' => "The announcement date must be {$competition_rules['min_competition_days']} days after starting the competition.",
-                'announcement_at.before_or_equal' => "The announcement date must be {$competition_rules['max_competition_days']} days from now."
+                'voting_start_at.after_or_equal' => "The voting must start after {$competition_rules['voting_delay_days']} days from today.",
+                'announcement_at.after_or_equal' => "The announcement must be {$competition_rules['min_competition_days']} days after starting the competition.",
+                'announcement_at.before_or_equal' => "The announcement must be {$competition_rules['max_competition_days']} days from now."
             ]);
             if ($errors) return $errors;
             // time validations
             if (strtotime($request->announcement_at) > strtotime("+" . $competition_rules['max_competition_days'] . " days")) {
-                return $this->resMsg(["error" => "Announcement date must be before " . $competition_rules['max_competition_days'] . " days."], "validation", 403);
+                return $this->resMsg(["error" => "Announcement must be before " . $competition_rules['max_competition_days'] . " days."], "validation", 403);
             }
             if (strtotime($request->announcement_at) < strtotime("+" . $competition_rules['min_competition_days'] . " days")) {
-                return $this->resMsg(["error" => "Announcement date must be after " . $competition_rules['min_competition_days'] . " days."], "validation", 403);
+                return $this->resMsg(["error" => "Announcement must be after " . $competition_rules['min_competition_days'] . " days."], "validation", 403);
             }
             if (strtotime($request->voting_start_at) < (strtotime($request->voting_start_at))) {
-                return $this->resMsg(["error" => "Voting date must be after " . $competition_rules['voting_delay_days'] . " days."], "validation", 403);
+                return $this->resMsg(["error" => "Voting must start after " . $competition_rules['voting_delay_days'] . " days."], "validation", 403);
             }
 
             return $this->resData(CompetitionOrganizerResource::make($competition));
@@ -298,7 +298,8 @@ class CompetitionController extends BaseController
             CompetitionPublishedJob::dispatch($user, $competition);
 
             DB::commit();
-            return $this->resMsg(["success" => "Competition published successfully."]);
+
+            return $this->resData(CompetitionOrganizerResource::make($competition));
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
