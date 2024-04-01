@@ -2,8 +2,6 @@
 <html lang="en" class="no-js">
 
 <head>
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-
     <!--- basic page needs
     ================================================== -->
     <meta charset="utf-8">
