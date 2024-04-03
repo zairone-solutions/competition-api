@@ -100,6 +100,7 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
     });
 });
 
+Route::post("/", "\App\Http\Controllers\Api\V1\Controller@home");
 Route::post("aws_test_upload", "\App\Http\Controllers\Controller@aws_test_upload");
 Route::post("aws_test_delete", "\App\Http\Controllers\Controller@aws_test_delete");
 Route::get("test_supabase", "\App\Http\Controllers\Controller@test_supabase");
