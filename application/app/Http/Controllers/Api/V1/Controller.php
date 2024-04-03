@@ -25,9 +25,9 @@ class Controller extends BaseController
         ];
     }
 
-    public function test()
+    public function home()
     {
-        return response(['name' => "Ali Naqi Al-Musawi"]);
+        return response(["app" => "Uniquo", "version" => "0.0.1", "author" => "Ali Naqi Al-Musawi"]);
     }
     public function protected_test()
     {
