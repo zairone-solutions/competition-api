@@ -4,7 +4,7 @@ services:
   uniquo-app:
     deploy:
       mode: replicated
-      replicas: 5
+      replicas: 15
     build:
       args:
         user: ${DOCKER_SYSTEM_USER}
