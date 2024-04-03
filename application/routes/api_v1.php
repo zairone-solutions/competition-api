@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
+    Route::get("/", "Controller@home");
 
     Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::get("protected_test", "Controller@protected_test");
@@ -100,7 +101,6 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
     });
 });
 
-Route::post("/", "\App\Http\Controllers\Api\V1\Controller@home");
 Route::post("aws_test_upload", "\App\Http\Controllers\Controller@aws_test_upload");
 Route::post("aws_test_delete", "\App\Http\Controllers\Controller@aws_test_delete");
 Route::get("test_supabase", "\App\Http\Controllers\Controller@test_supabase");
