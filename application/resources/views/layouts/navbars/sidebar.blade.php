@@ -91,7 +91,11 @@
                     </a>
                 </li> --}}
 
-
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('allusers') }}">
+                        <i class="ni ni-circle-08 text-blue"></i> {{ __('Users') }}
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('setting.edit') }}">
                         <i class="ni ni-settings text-blue"></i> {{ __('Settings') }}

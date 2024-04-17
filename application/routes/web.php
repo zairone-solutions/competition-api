@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use BeyondCode\LaravelWebSockets\Facades\WebSocketRouter;
 use Ably\AblyRest;
 
+use App\Http\Controllers\UserController;
+
 
 // Define a route to handle WebSocket connections
 
@@ -56,12 +58,22 @@ Auth::routes();
 // Route::get('/home', 'App\Http\Controllers\HomeController@index')->name('home');
 
 Route::group(['middleware' => 'auth'], function () {
+
     Route::resource('user', 'App\Http\Controllers\UserController', ['except' => ['show']]);
     Route::get('profile', ['as' => 'profile.edit', 'uses' => 'App\Http\Controllers\ProfileController@edit']);
     Route::put('profile', ['as' => 'profile.update', 'uses' => 'App\Http\Controllers\ProfileController@update']);
 
     Route::get('setting', ['as' => 'setting.edit', 'uses' => 'App\Http\Controllers\SettingController@edit']);
     Route::put('profile', ['as' => 'setting.update', 'uses' => 'App\Http\Controllers\SettingController@update']);
+
+    // For Users Module
+    Route::get('all-users', [UserController::class,'showuser'])->name('allusers');
+    Route::get('add-user', [UserController::class,'adduser'])->name('adduser');
+    Route::post('store-user', [UserController::class,'storeuser'])->name('storeuser');
+    Route::get('edit-user/{id}', [UserController::class,'edituser'])->name('edituser');
+    Route::post('update-user/{id}', [UserController::class,'updateuser'])->name('updateuser');
+    Route::get('delete-user/{id}', [UserController::class,'deleteuser'])->name('deleteuser');
+
 
 
     Route::get('upgrade', function () {
