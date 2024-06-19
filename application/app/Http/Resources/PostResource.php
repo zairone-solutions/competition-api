@@ -21,8 +21,9 @@ class PostResource extends BaseResource
             'posted_at' => $this->time2str($this->created_at),
             'votes' => $votes,
             "winner" => $this->competition->winner_id == $this->user->id,
+            "approved" => $this->approved_at !== null,
             "user" => UserResource::make($this->user),
-            'images' => PostMediaResource::collection($this->media),
+            'media' => PostMediaResource::collection($this->media),
         ];
     }
 

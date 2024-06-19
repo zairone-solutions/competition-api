@@ -27,6 +27,10 @@ class Post extends Model
     {
         return $query->whereNotNull('approved_at');
     }
+    public function scopeWon($query)
+    {
+        return $query->whereNotNull('approved_at');
+    }
     public function scopeVisible($query)
     {
         return $query->where('hidden', "0");

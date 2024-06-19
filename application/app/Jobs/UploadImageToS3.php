@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Helpers\RuleHelper;
 use App\Jobs\Media\UnlinkTemporaryMedia;
+use App\Models\Competition;
 use App\Models\PostMedia;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -20,6 +21,7 @@ class UploadImageToS3 implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $media;
+    protected $competition;
     protected $path;
     protected $temporaryFilePath;
     /**
@@ -27,8 +29,9 @@ class UploadImageToS3 implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(PostMedia $media, string $path, string $temporaryFilePath)
+    public function __construct(Competition $competition, PostMedia $media, string $path, string $temporaryFilePath)
     {
+        $this->competition = $competition;
         $this->media = $media;
         $this->path = $path;
         $this->temporaryFilePath = $temporaryFilePath;
@@ -58,7 +61,7 @@ class UploadImageToS3 implements ShouldQueue
 
         $this->media->update(["media" => $aws_path]);
 
-        UnlinkTemporaryMedia::dispatch($this->temporaryFilePath);
+        UnlinkTemporaryMedia::dispatch($this->temporaryFilePath, $this->competition, $this->media);
 
         DB::commit();
     }

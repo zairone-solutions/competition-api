@@ -40,10 +40,13 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         // Categories
         Route::post("categories", "CategoryController@request");
         Route::get("categories", "CategoryController@all");
+        Route::get("dashboard_categories", "CategoryController@dashboard_categories");
         Route::get("user_categories", "CategoryController@user_all");
 
         // Competitions
         Route::get("competitions", "CompetitionController@all");
+        Route::get("competitions/participation", "CompetitionController@participation");
+        Route::get("competitions/{category}/category", "CompetitionController@category_all");
         Route::post("competitions", "CompetitionController@store");
         Route::post("competitions/calculate_financials", "CompetitionController@calculate_financials");
         Route::post("competitions/{competition}/publish", "CompetitionController@publish");
@@ -60,15 +63,17 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
 
         // Posts
         Route::get("posts", "PostController@personal");
+        Route::get("posts/winner", "PostController@winner");
         Route::get("posts/{competition}", "PostController@all");
         // Route::post("posts/{competition}", "PostController@store")->middleware("competition_participant");
         Route::post("posts_text/{competition}/draft", "PostController@store_text")->middleware("competition_participant");
-        Route::post("posts_image/{competition}/draft/{post}", "PostController@store_image")->middleware("competition_participant");
-        Route::post("posts_video/{competition}/draft/{post}", "PostController@store_video")->middleware("competition_participant");
+        Route::post("posts_image/{competition}/draft/{post?}", "PostController@store_image")->middleware("competition_participant");
+        Route::post("posts_video/{competition}/draft/{post?}", "PostController@store_video")->middleware("competition_participant");
 
         Route::put("posts/{competition}/update/{post}", "PostController@update")->middleware("competition_participant");
-        Route::delete("posts/{competition}/delete_image/{post_image}", "PostController@delete_image")->middleware("competition_participant");
-        Route::post("posts/{competition}/upload_image/{post}", "PostController@upload_image")->middleware("competition_participant");
+        Route::delete("posts/{competition}/delete_draft/{post}", "PostController@delete")->middleware("competition_participant");
+        Route::delete("posts/{competition}/delete_media/{post_media}", "PostController@delete_media")->middleware("competition_participant");
+        Route::patch("posts/{competition}/publish/{post}", "PostController@publish")->middleware("competition_participant");
 
         Route::put("posts/{competition}/approve/{post}", "PostController@approve")->middleware("competition_organizer");
         Route::post("posts/{competition}/object/{post}", "PostController@object")->middleware("competition_organizer");
@@ -84,6 +89,7 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         // Payments
         Route::get("payments/all_methods", "PaymentController@all");
         Route::post("payments/competition/card", "PaymentController@card_competition");
+        Route::post("payments/competition/card_participation", "PaymentController@card_participation");
         Route::post("payments/competition/easypaisa", "PaymentController@easy_paisa_competition");
         Route::post("payments/competition/jazzcash", "PaymentController@jazz_cash_competition");
     });
@@ -103,7 +109,6 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
 
 Route::post("aws_test_upload", "\App\Http\Controllers\Controller@aws_test_upload");
 Route::post("aws_test_delete", "\App\Http\Controllers\Controller@aws_test_delete");
-Route::get("test_supabase", "\App\Http\Controllers\Controller@test_supabase");
 
 Route::get('/queue_job', function () {
     try {
@@ -123,7 +128,7 @@ Route::get('/queue_db', function () {
             $username = $faker->userName . rand(11111, 99999);
             $participant = \App\Models\User::create([
                 'username' => $username,
-                'email' =>   $username . "@gmail.com",
+                'email' => $username . "@gmail.com",
                 'full_name' => 'Participant User',
                 'email_verified_at' => date_format($faker->dateTimeBetween("-5 years"), 'Y-m-d H:i:s'),
                 'auth_provider' => 'email',

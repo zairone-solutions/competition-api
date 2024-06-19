@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Helpers\CompetitionHelper;
 use App\Helpers\RuleHelper;
+use App\Http\Resources\CompetitionResource;
 use App\Http\Resources\PostCommentResource;
 use App\Http\Resources\PostImageResource;
 use App\Http\Resources\PostJustified;
@@ -13,16 +15,19 @@ use App\Http\Resources\PostOrganizerResource;
 use App\Http\Resources\PostReportResource;
 use App\Http\Resources\PostResource;
 use App\Http\Resources\PostVoterResource;
+use App\Jobs\Media\UnlinkS3Media;
 use App\Jobs\UploadImageToS3;
 use App\Jobs\UploadVideoToS3;
 use App\Mail\Post\PostApproveAlert;
 use App\Mail\Post\PostObjectionAlert;
+use App\Mail\Post\PostPublishAlert;
 use App\Mail\Post\PostReportAlert;
 use App\Mail\Post\PostVoteAlert;
 use App\Models\Competition;
 use App\Models\Post;
 use App\Models\PostComment;
 use App\Models\PostImage;
+use App\Models\PostMedia;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,14 +44,15 @@ class PostController extends BaseController
         $rules = [];
         $competition = Setting::where("key", "post")->first();
         foreach ($competition->children()->get() as $rule) {
-            if ($key && $key == $rule->key) return $rule->value;
+            if ($key && $key == $rule->key)
+                return $rule->value;
             $rules[$rule->key] = $rule->value;
         }
         return $rules;
     }
     public function all(Request $request, Competition $competition)
     {
-        if (auth()->user()->id == $competition->organizer_id) {
+        if (auth()->id() == $competition->organizer_id) {
             return $this->resData(PostOrganizerResource::collection($competition->posts()->paginate(20)));
         }
         if (auth()->user()->votes()->where("competition_id", $competition->id)->count()) {
@@ -54,6 +60,10 @@ class PostController extends BaseController
         }
 
         return $this->resData(PostResource::collection($competition->posts()->approved()->visible()->paginate(20)));
+    }
+    public function winner(Request $request)
+    {
+        return $this->resData(PostResource::collection(Post::where("won", 1)->limit(5)->get()));
     }
     public function personal(Request $request)
     {
@@ -66,29 +76,28 @@ class PostController extends BaseController
             $competition_rules = RuleHelper::rules("competition");
 
             if (
-                $competition->posts()->where("user_id", auth()->user()->id)->created()->count()
-                || $competition->posts()->where("user_id", auth()->user()->id)->voted()->count()
+                $competition->posts()->where("user_id", auth()->id())->created()->count()
+                || $competition->posts()->where("user_id", auth()->id())->voted()->count()
 
             ) {
                 return $this->resMsg(["error" => "You have already posted in the competition."], "validation", 403);
             }
 
-            if ($competition->posts()->where("user_id", auth()->user()->id)->draft()->count() == $competition_rules['max_drafts_allowed']) {
+            if ($competition->posts()->where("user_id", auth()->id())->draft()->count() == $competition_rules['max_drafts_allowed']) {
                 return $this->resMsg(["error" => "You can only create " . $competition_rules['max_drafts_allowed'] . " drafts per competition."], "validation", 403);
             }
 
             $rules = [
-                "description" => ["nullable", "max:450", "bad_word"]
+                "description" => ["nullable", "max:450"]
             ];
-            $errors = $this->reqValidate($request->all(), $rules, [
-                'bad_word' => 'The :attribute cannot contain any inappropriate word.'
-            ]);
-            if ($errors) return $errors;
+            $errors = $this->reqValidate($request->all(), $rules);
+            if ($errors)
+                return $errors;
 
             DB::beginTransaction();
 
             $post = $competition->posts()->create([
-                'user_id' => auth()->user()->id,
+                'user_id' => auth()->id(),
                 'description' => $request->description,
                 'state' => "draft"
             ]);
@@ -108,6 +117,14 @@ class PostController extends BaseController
         try {
             $post_rules = RuleHelper::rules("post");
 
+            if (!$post->id) {
+                $post = $competition->posts()->create([
+                    'user_id' => auth()->id(),
+                    'description' => "",
+                    'state' => "draft"
+                ]);
+            }
+
             if ($post->media()->count() == $post_rules['no_of_images_allowed']) {
                 return $this->resMsg(["error" => "You can only upload " . $post_rules['no_of_images_allowed'] . " media files per post."], "validation", 403);
             }
@@ -121,7 +138,8 @@ class PostController extends BaseController
                 "image.mimes" => "The image must be a file of type: jpeg, png, jpg.",
                 "image.max" => "The image must not be greater than " . $post_rules['max_image_size'] . "mb.",
             ]);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
 
             DB::beginTransaction();
 
@@ -134,11 +152,11 @@ class PostController extends BaseController
             $fileName = uniqid() . '.' . $image->getClientOriginalExtension();
             $path = "images/posts/" . $fileName;
 
-            UploadImageToS3::dispatch($media, $path, $temporaryFilePath);
+            UploadImageToS3::dispatch($competition, $media, $path, $temporaryFilePath);
 
             DB::commit();
 
-            return $this->resData(PostMediaResource::make($media));
+            return $this->resData(PostResource::make($post));
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
@@ -150,6 +168,14 @@ class PostController extends BaseController
         try {
             $post_rules = RuleHelper::rules("post");
 
+            if (!$post->id) {
+                $post = $competition->posts()->create([
+                    'user_id' => auth()->id(),
+                    'description' => "",
+                    'state' => "draft"
+                ]);
+            }
+
             if ($post->media()->count() == $post_rules['no_of_images_allowed']) {
                 return $this->resMsg(["error" => "You can only upload " . $post_rules['no_of_images_allowed'] . " media files per post."], "validation", 403);
             }
@@ -159,7 +185,7 @@ class PostController extends BaseController
                     'required',
                     'file',
                     'mimes:mp4,avi,mov', // Adjust the allowed video formats as needed
-                    'max:' . ((int)$post_rules['max_video_size'] * 1024), // Convert to kilobytes
+                    'max:' . ((int) $post_rules['max_video_size'] * 1024), // Convert to kilobytes
                 ],
             ];
             $errors = $this->reqValidate($request->all(), $rules, [
@@ -187,7 +213,7 @@ class PostController extends BaseController
 
             DB::commit();
 
-            return $this->resData(PostMediaResource::make($media));
+            return $this->resData(PostResource::make($post));
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
@@ -197,82 +223,108 @@ class PostController extends BaseController
     {
         $post_rules = RuleHelper::rules("post");
         $rules = [
-            "description" => ["nullable", "max:450", "bad_word"],
-            // 'image' => ["nullable", "array", "size:3"],
-            // 'image.*' => ["nullable", "image", "mimes:jpeg,png,jpg", "max:" . ((int) $post_rules['max_image_size'] * 1024)],
+            "description" => ["nullable", "max:450"],
         ];
-        $errors = $this->reqValidate($request->all(), $rules, [
-            'bad_word' => 'The :attribute cannot contain any inappropriate word.',
-            // "image.size" => "You can only upload 3 images.",
-            // "image.*.image" => "Please upload a valid image.",
-            // "image.*.mimes" => "The image must be a file of type: jpeg, png, jpg.",
-            // "image.*.max" => "The image must not be greater than " . $post_rules['max_image_size'] . "mb.",
-        ]);
-        if ($errors) return $errors;
+        $errors = $this->reqValidate($request->all(), $rules, );
+        if ($errors)
+            return $errors;
 
         $post->update([
             'description' => $request->description
         ]);
 
-        // $images = $request->file("image");
-        // if ($request->hasFile("image")) {
-        //     foreach ($images as $image) {
-        //         $imageName = time() . "_" . rand(1111, 9999) . "." . $image->getClientOriginalExtension();
-        //         $imgFile = Image::make($image->getRealPath());
-        //         $imgFile->orientate();
-        //         $imgFile->resize(720, 480, function ($constraint) {
-        //             $constraint->aspectRatio();
-        //             $constraint->upsize();
-        //         })->save(public_path('storage/posts/') .  $imageName);
-
-        //         // $img->storeAs('public/posts', $imageName);
-        //         $post->images()->create(['image' => "posts/" . $imageName, "mime_type" => $image->extension()]);
-        //     }
-        // }
-        return $this->resData(PostResource::make($post));
+        return $this->resData(CompetitionResource::make($competition));
     }
-    public function upload_image(Request $request, Competition $competition, Post $post)
-    {
-        $post_rules = RuleHelper::rules("post");
 
-        if ($post->images()->count() >= (int) $post_rules['no_of_images_allowed']) {
-            return $this->resMsg(["error" => "Maximum images limit reached! Please delete any image to upload a new one."], "authentication", 400);
+    public function delete(Request $request, Competition $competition, Post $post)
+    {
+        try {
+            DB::beginTransaction();
+
+            if ($post->media()->count()) {
+
+                $media = $post->media()->get();
+
+                foreach ($media as $item) {
+
+                    UnlinkS3Media::dispatch($item->media);
+                    $item->delete();
+                }
+            }
+
+            $post->delete();
+
+            DB::commit();
+
+            return $this->resData(CompetitionResource::make($competition));
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
         }
-        $rules = [
-            'image' => ["required", "image", "mimes:jpeg,png,jpg", "max:" . ((int) $post_rules['max_image_size'] * 1024)],
-        ];
-        $errors = $this->reqValidate($request->all(), $rules, [
-            "image.image" => "Please upload a valid image.",
-            "image.mimes" => "The image must be a file of type: jpeg, png, jpg.",
-            "image.max" => "The image must not be greater than " . $post_rules['max_image_size'] . "mb.",
-        ]);
-        if ($errors) return $errors;
-
-        $image = $request->file("image");
-        $imageName = time() . "_" . rand(1111, 9999) . "." . $image->getClientOriginalExtension();
-        $imgFile = Image::make($image->getRealPath());
-        $imgFile->orientate();
-        $imgFile->resize((int) $post_rules['image_resize_width'] ?? 720, (int) $post_rules['image_resize_height'] ?? 480, function ($constraint) {
-            $constraint->aspectRatio();
-            $constraint->upsize();
-        })->save(public_path('storage/posts/') .  $imageName);
-
-        // $img->storeAs('public/posts', $imageName);
-        $post_image = $post->images()->create(['image' => "posts/" . $imageName, "mime_type" => $image->extension()]);
-
-        return $this->resData(PostImageResource::make($post_image));
     }
-    public function delete_image(Request $request, Competition $competition, PostImage $post_image)
+    public function delete_media(Request $request, Competition $competition, PostMedia $post_media)
     {
-        Storage::delete("public/" . $post_image->image);
-        $post_image->delete();
-        return $this->resMsg(['success' => "Image deleted successfully."]);
+        try {
+            DB::beginTransaction();
+
+            UnlinkS3Media::dispatch($post_media->media);
+
+            $post_media->delete();
+
+            DB::commit();
+
+            return $this->resMsg(['success' => "Image deleted successfully."]);
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
+    public function publish(Request $request, Competition $competition, Post $post)
+    {
+        try {
+            DB::beginTransaction();
+
+            $post->update(['state' => "created", "approved_at" => date("Y-m-d H:i:s")]);
+
+            if ($competition->posts()->where("user_id", auth()->id())->where("id", "!=", $post->id)->count()) {
+
+                $drafts = $competition->posts()->where("user_id", auth()->id())->where("id", "!=", $post->id)->get();
+                foreach ($drafts as $draft) {
+
+                    if ($draft->media()->count()) {
+
+                        $media = $draft->media()->get();
+                        foreach ($media as $item) {
+
+                            UnlinkS3Media::dispatch($item->media);
+                            $item->delete();
+                        }
+                    }
+
+                    $draft->delete();
+                }
+            }
+
+            @Mail::to($post->user)->send(new PostPublishAlert(['organizer' => $competition->organizer, 'competition' => $competition]));
+            $this->triggerNotification($post->user->id, $post->user->notification_token, "Post published for approval!", 'published_post', "A user has published a post for approval in " . $this->cName($competition->slug), ['id' => $post->id]);
+
+            DB::commit();
+
+            return $this->resData(CompetitionResource::make($competition));
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
     }
     public function approve(Request $request, Competition $competition, Post $post)
     {
 
         $post->update(['approved_at' => date("Y-m-d H:i:s")]);
-        if ($post->objection) $post->objection->update(['cleared' => 1]);
+        if ($post->objection)
+            $post->objection->update(['cleared' => 1]);
 
         // Email & Notifications
         @Mail::to($post->user)->send(new PostApproveAlert(['organizer' => $competition->organizer, 'competition' => $competition]));
@@ -294,11 +346,14 @@ class PostController extends BaseController
         }
         $rules = ["description" => ["required", "min:6", "max:450", "bad_word"]];
         $errors = $this->reqValidate($request->all(), $rules, ['description.required' => "You must provide the reason.", 'bad_word' => 'The :attribute cannot contain any inappropriate word.',]);
-        if ($errors) return $errors;
+        if ($errors)
+            return $errors;
 
         $post->update(['approved_at' => NULL]);
-        if ($post->objection) $post->objection->update(['description' => $request->description, 'cleared' => 0]);
-        else $post->objection()->create(['description' => $request->description, 'cleared' => 0]);
+        if ($post->objection)
+            $post->objection->update(['description' => $request->description, 'cleared' => 0]);
+        else
+            $post->objection()->create(['description' => $request->description, 'cleared' => 0]);
 
         // Email & Notifications
         @Mail::to($post->user)->send(new PostObjectionAlert(['objection' => $post->objection, 'competition' => $competition]));
@@ -315,7 +370,7 @@ class PostController extends BaseController
             return $this->resMsg(["error" => "Competition already announced!"], "validation", 403);
         }
 
-        $vote = $post->votes()->create(['competition_id' => $competition->id, "voter_id" => auth()->user()->id]);
+        $vote = $post->votes()->create(['competition_id' => $competition->id, "voter_id" => auth()->id()]);
 
         // Email & Notification
         @Mail::to($post->user)->send(new PostVoteAlert(['organizer' => $competition->organizer, 'competition' => $competition, 'vote' => $vote]));
@@ -331,23 +386,22 @@ class PostController extends BaseController
 
         $rules = ["description" => ["nullable", "min:6", "max:450", "bad_word"]];
         $errors = $this->reqValidate($request->all(), $rules);
-        if ($errors) return $errors;
+        if ($errors)
+            return $errors;
 
-        $report = $post->reports()->create(['reporter_id' => auth()->user()->id, 'organizer_id' => $competition->organizer->id, 'description' => $request->description]);
+        $report = $post->reports()->create(['reporter_id' => auth()->id(), 'organizer_id' => $competition->organizer->id, 'description' => $request->description]);
 
         // Email & Notifications
         @Mail::to($post->user)->send(new PostReportAlert(['report' => $report, 'competition' => $post->competition, 'user' => auth()->user()]));
-        $this->triggerNotification($post->user->id, $post->user->notification_token, "Post Reported!", 'reported', auth()->user()->username . " has reported a post in " .  $this->cName($competition->slug) . ".", ['id' => $report->id]);
+        $this->triggerNotification($post->user->id, $post->user->notification_token, "Post Reported!", 'reported', auth()->user()->username . " has reported a post in " . $this->cName($competition->slug) . ".", ['id' => $report->id]);
 
         return $this->resData(PostReportResource::make($report));
     }
 
-
-
     public function comments_all(Request $request, Post $post)
     {
         try {
-            if (auth()->user()->id == $post->organizer_id)
+            if (auth()->id() == $post->organizer_id)
                 $comments = PostCommentResource::collection($post->comments()->coms()->default()->paginate(15));
             else
                 $comments = PostCommentResource::collection($post->comments()->coms()->visible()->default()->paginate(15));
@@ -360,7 +414,7 @@ class PostController extends BaseController
     public function comment_replies_all(Request $request, Post $post, PostComment $post_comment)
     {
         try {
-            if (auth()->user()->id == $post->organizer_id)
+            if (auth()->id() == $post->organizer_id)
                 $replies = PostCommentResource::collection($post_comment->replies()->default()->paginate(15));
             else {
                 if ($post_comment->hidden) {
@@ -376,9 +430,10 @@ class PostController extends BaseController
     public function comments_store(Request $request, Post $post)
     {
         try {
-            $rules = ['text' => "required|min:1|max:450|bad_word"];
+            $rules = ['text' => "required|min:1|max:450"];
             $errors = $this->reqValidate($request->all(), $rules, ['bad_word' => 'The :attribute cannot contain any inappropriate word.']);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
 
             DB::beginTransaction();
 
@@ -398,9 +453,10 @@ class PostController extends BaseController
     public function comment_replies(Request $request, Post $post, PostComment $post_comment)
     {
         try {
-            $rules = ['text' => "required|min:1|max:450|bad_word"];
+            $rules = ['text' => "required|min:1|max:450"];
             $errors = $this->reqValidate($request->all(), $rules, ['bad_word' => 'The :attribute cannot contain any inappropriate word.']);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
 
             DB::beginTransaction();
 
@@ -421,7 +477,7 @@ class PostController extends BaseController
     public function comment_update(Request $request, Post $post, PostComment $post_comment)
     {
         try {
-            if (auth()->user()->id !== $post->organizer_id) {
+            if (auth()->id() !== $post->organizer_id) {
                 return $this->resMsg(["error" => "Only organizer can update a comment."], "authentication", 400);
             }
 
