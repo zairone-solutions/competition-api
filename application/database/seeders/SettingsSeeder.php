@@ -29,7 +29,7 @@ class SettingsSeeder extends Seeder
 
         $post = Setting::create(['key' => "post", 'title' => "Post"]);
         $post->children()->create(['key' => 'max_image_size', 'rule' => "required|numeric", 'title' => "Max Image Size (MB)", 'value' => 10]);
-        $post->children()->create(['key' => 'no_of_images_allowed', 'rule' => "required|numeric", 'title' => "Allowed Images per post", 'value' => 3]);
+        $post->children()->create(['key' => 'no_of_images_allowed', 'rule' => "required|numeric", 'title' => "Allowed Media per post", 'value' => 3]);
         $post->children()->create(['key' => 'image_resize_width', 'rule' => "required|numeric", 'title' => "Image Resize Width (px)", 'value' => 720]);
         $post->children()->create(['key' => 'image_resize_height', 'rule' => "required|numeric", 'title' => "Image Resize Height (px)", 'value' => 480]);
         $post->children()->create(['key' => 'image_quality', 'rule' => "required|numeric", 'title' => "Image Quality (%)", 'value' => 60]);

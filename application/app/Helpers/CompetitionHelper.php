@@ -26,4 +26,13 @@ class CompetitionHelper
             return "completed";
         }
     }
+
+    public static function extractUri(string $url)
+    {
+
+        $parsedUrl = parse_url($url);
+        $uri = pathinfo($parsedUrl['path']);
+
+        return substr($uri['dirname'] . "/" . $uri['basename'], 1);
+    }
 }

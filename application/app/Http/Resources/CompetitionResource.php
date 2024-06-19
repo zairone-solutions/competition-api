@@ -38,8 +38,17 @@ class CompetitionResource extends BaseResource
             'category' => CategoryResource::make($this->category),
             "organizer" => UserResource::make($this->organizer),
             "winner" => UserResource::make($this->winner),
+            "myDraftPosts" => [],
+            "myPost" => null,
         ];
-        if ($this->participants()->where("participant_id", auth()->user()->id)->count()) {
+        if ($this->posts()->where(["user_id" => auth()->id(), "state" => "draft"])->count()) {
+            $data["myDraftPosts"] = PostResource::collection($this->posts()->where(["user_id" => auth()->id(), "state" => "draft"])->get());
+        }
+        if ($this->posts()->where("user_id", auth()->id())->where("state", "!=", "draft")->count()) {
+            $data["myPost"] = PostResource::make($this->posts()->where("user_id", auth()->id())->where("state", "!=", "draft")->first());
+        }
+
+        if ($this->participants()->where("participant_id", auth()->id())->count()) {
             $data['participated'] = TRUE;
         }
         return $data;

@@ -20,6 +20,7 @@ class CreatePostsTable extends Migration
 
             $table->text("description")->nullable();
             $table->boolean("hidden")->default(1);
+            $table->boolean("won")->default(0);
             $table->enum("state", ['draft', 'created', 'voted'])->default('created');
             $table->dateTime("approved_at")->nullable();
             $table->timestamps();

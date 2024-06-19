@@ -41,6 +41,15 @@ class Competition extends Model
     {
         return $query->whereNotNull('published_at');
     }
+    public function scopeNotOrganizerBySelf($query)
+    {
+        return $query->where("organizer_id", "!=", auth()->id());
+    }
+    public function scopeUpForParticipation($query)
+    {
+        return $query->published()->notOrganizerBySelf()->where("voting_start_at", ">", date("Y-m-d H:i:s"));
+    }
+
     // relations
     public function organizer()
     {
