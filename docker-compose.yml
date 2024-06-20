@@ -118,6 +118,25 @@ services:
     networks:
       - uniquo-app-network
 
+  # Cronjobs Service
+  uniquo-cron:
+    build:
+      args:
+        user: root
+        uid: 1000
+      context: .
+      dockerfile: application/Dockerfile
+    image: alinaqi2000/uniquo-cron
+    container_name: uniquo-cron
+    restart: unless-stopped
+    volumes:
+      - ./application:/var/www
+      - ./.env:/var/www/.env
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    command: ["sh", "-c", "cron && tail -f /var/log/cron.log"]
+    networks:
+      - uniquo-app-network
+
   uniquo-websockets:
     build:
       args:

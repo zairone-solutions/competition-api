@@ -224,6 +224,7 @@ class DatabaseSeeder extends Seeder
             "category_id" => $category->id,
             "title" => $title,
             "slug" => Str::slug($title),
+            "state" => "completed",
             "participants_allowed" => 500,
             "announcement_at" => date_format($this->faker->dateTimeBetween("+3 days", "+14 days"), "Y-m-d H:i:s"),
             "voting_start_at" => date_format($this->faker->dateTimeBetween($upForParticipation ? "+1 day" : "now", "+3 days"), "Y-m-d H:i:s"),
@@ -383,7 +384,7 @@ class DatabaseSeeder extends Seeder
     private function postWon(Post $post)
     {
         $post->update(["won" => 1]);
-        $post->competition()->update(["winner_id" => $post->user->id]);
+        $post->competition->winners()->create(["winner_id" => $post->user->id]);
     }
     private function createComments(Post $post, array $users)
     {

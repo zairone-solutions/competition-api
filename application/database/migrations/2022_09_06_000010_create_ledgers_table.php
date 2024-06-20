@@ -16,7 +16,7 @@ class CreateLedgersTable extends Migration
         Schema::create('ledgers', function (Blueprint $table) {
             $table->bigIncrements("id");
             $table->foreignId("user_id")->constrained("users")->cascadeOnUpdate()->cascadeOnUpdate();
-            $table->foreignId("payment_id")->constrained("payments")->cascadeOnUpdate()->cascadeOnUpdate();
+            $table->foreignId("payment_id")->nullable()->constrained("payments")->cascadeOnUpdate()->cascadeOnDelete();
 
             $table->string("title")->nullable();
             $table->enum("type", ['debit', 'credit'])->default("credit");

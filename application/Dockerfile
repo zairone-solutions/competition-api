@@ -14,7 +14,8 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    ffmpeg # Install FFMpeg
+    ffmpeg \
+    cron # Install cron
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -38,4 +39,17 @@ COPY ./.env /var/www/.env
 
 WORKDIR /var/www
 
+# Copy the Laravel cronjob script
+COPY ./crontab /etc/cron.d/laravel-cron
+
+# Give execution rights on the cron job
+RUN chmod 0644 /etc/cron.d/laravel-cron
+
+# Apply cron job
+RUN crontab /etc/cron.d/laravel-cron
+
+# Create the log file to be able to run tail
+RUN touch /var/log/cron.log
+
+# Set the user to root to run cron daemon
 USER $user

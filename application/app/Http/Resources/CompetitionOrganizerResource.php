@@ -40,9 +40,12 @@ class CompetitionOrganizerResource extends BaseResource
             "expired" => strtotime($this->announcement_at) < time(),
             'category' => CategoryResource::make($this->category),
             "organizer" => UserResource::make($this->organizer),
-            "winner" => UserResource::make($this->winner),
+            "winners" => [],
             "payment" => CompetitionPaymentResource::make($this->payments()->byOrganizer($this->organizer_id)->verified()->first()),
         ];
+        foreach ($this->winners()->get() as $winner) {
+            $data['winners'][] = UserResource::make($winner->winner);
+        }
 
         return $data;
     }
