@@ -15,6 +15,7 @@ use App\Models\CompetitionComment;
 use App\Models\PostComment;
 use App\Models\Category;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -23,10 +24,10 @@ use Illuminate\Support\Facades\Mail;
 
 class CompetitionController extends BaseController
 {
-    private function voted()
+    private function voted(User $user)
     {
         $voted = [];
-        foreach (auth()->user()->votes()->get() as $vote) {
+        foreach ($user->votes()->get() as $vote) {
             $voted[] = $vote->competition()->first();
         }
         return $voted;
@@ -38,10 +39,10 @@ class CompetitionController extends BaseController
 
         return $cost_per_participant * $participants;
     }
-    private function participated()
+    private function participated(User $user)
     {
         $participated = [];
-        foreach (auth()->user()->participations()->get() as $vote) {
+        foreach ($user->participations()->get() as $vote) {
             $participated[] = $vote->competition()->first();
         }
         return $participated;
@@ -59,6 +60,14 @@ class CompetitionController extends BaseController
     {
         try {
             return $this->resData(CompetitionResource::collection(Competition::upForParticipation()->get()));
+        } catch (\Throwable $th) {
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
+    public function explore(Request $request)
+    {
+        try {
+            return $this->resData(CompetitionResource::collection(Competition::upForVoting()->get()));
         } catch (\Throwable $th) {
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
         }
@@ -85,18 +94,30 @@ class CompetitionController extends BaseController
     {
 
         try {
+
+            $user = auth()->user();
+            if ($request->has("username")) {
+                if ($findUser = User::where(["username" => $request->get("username")])->first()) {
+                    $user = $findUser;
+                }
+            }
+
             switch ($request->get("type")) {
                 case 'voted':
-                    return $this->resData(CompetitionResource::collection($this->voted()));
+                    return $this->resData(CompetitionResource::collection($this->voted($user)));
                 case 'participated':
-                    return $this->resData(CompetitionResource::collection($this->participated()));
+                    return $this->resData(CompetitionResource::collection($this->participated($user)));
                 case 'organized':
-                    return $this->resData(CompetitionOrganizerResource::collection(auth()->user()->competitions()->get()));
+                    return $user->id !== auth()->id() ?
+                        $this->resData(CompetitionResource::collection($user->competitions()->get())) :
+                        $this->resData(CompetitionOrganizerResource::collection($user->competitions()->get()));
                 default:
                     return $this->resData([
-                        'organized' => CompetitionOrganizerResource::collection(auth()->user()->competitions()->get()),
-                        'participated' => CompetitionResource::collection($this->participated()),
-                        'voted' => CompetitionResource::collection($this->voted())
+                        'organized' => $user->id !== auth()->id() ?
+                            CompetitionResource::collection($user->competitions()->get()) :
+                            CompetitionOrganizerResource::collection($user->competitions()->get()),
+                        'participated' => CompetitionResource::collection($this->participated($user)),
+                        'voted' => CompetitionResource::collection($this->voted($user))
                     ]);
             }
         } catch (\Throwable $th) {

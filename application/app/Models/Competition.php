@@ -49,6 +49,10 @@ class Competition extends Model
     {
         return $query->published()->notOrganizerBySelf()->where("voting_start_at", ">", date("Y-m-d H:i:s"));
     }
+    public function scopeUpForVoting($query)
+    {
+        return $query->published()->notOrganizerBySelf()->where("voting_start_at", "<", date("Y-m-d H:i:s"))->where("announcement_at", ">", date("Y-m-d H:i:s"));
+    }
 
     // relations
     public function organizer()

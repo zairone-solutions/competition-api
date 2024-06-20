@@ -18,7 +18,7 @@ class PostVoter
     {
         $competition = $request->route('competition');
         if (auth()->user()->id == $competition->organizer_id || auth()->user()->participations()->where("competition_id",  $competition->id)->count()) {
-            return response()->json(['error_type' => "authorization", "message" => [
+            return response()->json(['error_type' => "authorization", "messages" => [
                 "error" => "Only a voter can perform this action."
             ]]);
         }

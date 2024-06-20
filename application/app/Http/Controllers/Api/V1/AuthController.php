@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Resources\AuthUserResource;
+use App\Http\Resources\NotificationResource;
 use App\Mail\Auth\EmailVerification;
 use App\Mail\Auth\ForgetPassword;
 use App\Mail\Auth\ResetPasswordSuccess;
@@ -31,7 +32,8 @@ class AuthController extends BaseController
                 'password' => "required|min:8|max:20",
             ];
             $errors = $this->reqValidate($request->all(), $rules);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
 
             $data = $request->only(['email', 'password', 'full_name']);
             $username = $this->generateUserName($data['email']);
@@ -56,7 +58,8 @@ class AuthController extends BaseController
         try {
             $rules = ['code' => "required|numeric|digits:5"];
             $errors = $this->reqValidate($request->all(), $rules);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
 
             if (auth()->user()->email_verification_code == $request->code) {
                 auth()->user()->update(['email_verified_at' => date_format(new DateTime(), 'Y-m-d H:i:s')]);
@@ -106,7 +109,8 @@ class AuthController extends BaseController
         try {
             $rules = ['identity' => ["required", new IdentityRule()]];
             $errors = $this->reqValidate($request->all(), $rules, ['identity.required' => "Email or username is required."]);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
 
             if (filter_var($request->identity, FILTER_VALIDATE_EMAIL)) {
                 $credentials['email'] = trim($request->identity);
@@ -149,7 +153,8 @@ class AuthController extends BaseController
         try {
             $rules = ['code' => "required|numeric|digits:5"];
             $errors = $this->reqValidate($request->all(), $rules);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
 
             if (auth()->user()->password_resets()->where(['code' => $request->code])->first()) {
 
@@ -169,7 +174,8 @@ class AuthController extends BaseController
         try {
             $rules = ['password' => "required|min:8|max:20"];
             $errors = $this->reqValidate($request->all(), $rules);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
 
             auth()->user()->update(['password' => Hash::make($request->password)]);
             auth()->user()->tokens()->delete();
@@ -189,7 +195,8 @@ class AuthController extends BaseController
         try {
             $rules = ['identity' => ["required", new IdentityRule()], 'password' => "required|min:8|max:20"];
             $errors = $this->reqValidate($request->all(), $rules, ['identity.required' => "Email or username is required."]);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
 
             if (filter_var($request->identity, FILTER_VALIDATE_EMAIL)) {
                 $credentials['email'] = trim($request->identity);
@@ -231,7 +238,8 @@ class AuthController extends BaseController
         try {
             $rules = ['accessToken' => "required"];
             $errors = $this->reqValidate($request->all(), $rules, ['accessToken.required' => "Google OAuth token is missing."]);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
 
             $providerUser = Socialite::driver("google")->stateless()->userFromToken($request->accessToken);
             $user = User::where(['email' => $providerUser->email])->first();
@@ -239,7 +247,8 @@ class AuthController extends BaseController
                 $username = $this->generateUserName($providerUser->email);
                 $user = User::create(['username' => $username, 'full_name' => $providerUser->name, 'email' => $providerUser->email, 'avatar' => $providerUser->avatar, 'auth_provider' => "google"]);
             }
-            if (!$user->avatar) $user->update(['avatar' => $providerUser->avatar]);
+            if (!$user->avatar)
+                $user->update(['avatar' => $providerUser->avatar]);
 
             Auth::login($user);
 
@@ -269,10 +278,19 @@ class AuthController extends BaseController
         try {
             $rules = ['notification_token' => "required"];
             $errors = $this->reqValidate($request->all(), $rules, ['notification_token.required' => "Notification token is missing."]);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
 
             auth()->user()->update(['notification_token' => $request->notification_token]);
             return $this->resMsg(['success' => "Notification token set successfully!"]);
+        } catch (\Throwable $th) {
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
+    public function notifications(Request $request)
+    {
+        try {
+            return $this->resData(NotificationResource::collection(auth()->user()->notifications()->get()));
         } catch (\Throwable $th) {
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
         }

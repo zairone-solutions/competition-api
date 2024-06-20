@@ -35,6 +35,9 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         Route::post("verify_forget_password", "AuthController@verify_forget_password")->middleware(['ability:forget-password']);
         Route::post("reset_password", "AuthController@reset_password")->middleware(['ability:reset-password']);
 
+
+        // Notifications
+        Route::get("notifications", "AuthController@notifications");
         Route::post("set_notification_token", "AuthController@set_notification_token");
 
         // Categories
@@ -46,6 +49,7 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         // Competitions
         Route::get("competitions", "CompetitionController@all");
         Route::get("competitions/participation", "CompetitionController@participation");
+        Route::get("competitions/explore", "CompetitionController@explore");
         Route::get("competitions/{category}/category", "CompetitionController@category_all");
         Route::post("competitions", "CompetitionController@store");
         Route::post("competitions/calculate_financials", "CompetitionController@calculate_financials");
@@ -63,6 +67,7 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
 
         // Posts
         Route::get("posts", "PostController@personal");
+        Route::get("posts/voted", "PostController@voted");
         Route::get("posts/winner", "PostController@winner");
         Route::get("posts/{competition}", "PostController@all");
         // Route::post("posts/{competition}", "PostController@store")->middleware("competition_participant");
