@@ -29,6 +29,7 @@ use App\Models\PostComment;
 use App\Models\PostImage;
 use App\Models\PostMedia;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -65,9 +66,36 @@ class PostController extends BaseController
     {
         return $this->resData(PostResource::collection(Post::where("won", 1)->limit(5)->get()));
     }
+    public function voted(Request $request)
+    {
+
+        $user = auth()->user();
+        if ($request->has("username")) {
+            if ($findUser = User::where(["username" => $request->get("username")])->first()) {
+                $user = $findUser;
+            }
+        }
+
+        $votedPosts = collect();
+
+        if ($votes = $user->votes()->get()) {
+            foreach ($votes as $vote) {
+                $votedPosts->add($vote->post);
+            }
+        }
+
+        return $this->resData(PostResource::collection($votedPosts));
+    }
     public function personal(Request $request)
     {
-        return $this->resData(PostJustifiedResource::collection(auth()->user()->posts()->paginate(20)));
+
+        $user = auth()->user();
+        if ($request->has("username")) {
+            if ($findUser = User::where(["username" => $request->get("username")])->first()) {
+                $user = $findUser;
+            }
+        }
+        return $this->resData(PostJustifiedResource::collection($user->posts()->voted()->paginate(20)));
     }
     public function store_text(Request $request, Competition $competition)
     {
@@ -209,7 +237,7 @@ class PostController extends BaseController
             $fileName = uniqid() . '.' . $video->getClientOriginalExtension();
             $path = "videos/posts/" . $fileName;
 
-            UploadVideoToS3::dispatch($media, $path, $temporaryFilePath);
+            UploadVideoToS3::dispatch($competition, $media, $path, $temporaryFilePath);
 
             DB::commit();
 
@@ -286,7 +314,7 @@ class PostController extends BaseController
         try {
             DB::beginTransaction();
 
-            $post->update(['state' => "created", "approved_at" => date("Y-m-d H:i:s")]);
+            $post->update(['state' => "created", 'hidden' => "0", "approved_at" => date("Y-m-d H:i:s")]);
 
             if ($competition->posts()->where("user_id", auth()->id())->where("id", "!=", $post->id)->count()) {
 

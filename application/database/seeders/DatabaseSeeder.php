@@ -270,6 +270,7 @@ class DatabaseSeeder extends Seeder
             'competition_id' => $competition->id,
             'description' => $this->faker->sentence(),
             'hidden' => 0,
+            'state' => "voted",
             'approved_at' => date_format($this->faker->dateTimeBetween("now", "+1 days"), 'Y-m-d H:i:s')
         ]);
 

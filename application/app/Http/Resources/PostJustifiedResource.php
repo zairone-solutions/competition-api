@@ -23,7 +23,7 @@ class PostJustifiedResource extends BaseResource
             'objection' => $objection,
             "winner" => $this->competition->winner_id == $this->user->id,
             "user" => UserResource::make($this->user),
-            'media' => PostMediaResource::collection($this->images),
+            'media' => PostMediaResource::collection($this->media),
         ];
     }
 

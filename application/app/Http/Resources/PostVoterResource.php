@@ -13,15 +13,19 @@ class PostVoterResource extends BaseResource
     public function toArray($request)
     {
         $votes = time() > strtotime($this->competition->announcement_at) ? $this->number_format_short($this->votes->count()) : NULL;
-        return [
+        $data = [
             'id' => $this->id,
             'description' => $this->description,
             'posted_at' => $this->time2str($this->created_at),
-            'voted' => TRUE,
+            "votedByMe" => FALSE,
             'votes' => $votes,
             "winner" => $this->competition->winner_id == $this->user->id,
             "user" => UserResource::make($this->user),
             'media' => PostMediaResource::collection($this->media),
         ];
+        if ($this->votes()->where("voter_id", auth()->id())->count()) {
+            $data['votedByMe'] = TRUE;
+        }
+        return $data;
     }
 }
