@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\SendRegisterEmail;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -114,6 +115,32 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
 
 Route::post("aws_test_upload", "\App\Http\Controllers\Controller@aws_test_upload");
 Route::post("aws_test_delete", "\App\Http\Controllers\Controller@aws_test_delete");
+
+Route::get("/text_nsfw_text", function () {
+
+
+    $response = Http::post(env("NSFW_API_URL") . 'filter_text', ["text" => "Fuck you!"]);
+
+    dd($response->json());
+
+});
+Route::get("/text_nsfw_image", function () {
+
+    $response = Http::get("https://uniquo-alpha.s3.us-east-1.amazonaws.com/images/posts/667767ac623f0.jpg");
+
+    if ($response->successful()) {
+        $imageContents = $response->body();
+        $imageName = 'temp_' . uniqid() . '.jpg';
+        $response = Http::attach(
+            'image',
+            $imageContents,
+            $imageName
+
+        )->post(env("NSFW_API_URL") . 'filter_image');
+
+        dd($response->json());
+    }
+});
 
 Route::get('/queue_job', function () {
     try {
