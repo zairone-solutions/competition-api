@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Media;
 
 use App\Helpers\RuleHelper;
 use App\Jobs\Media\UnlinkTemporaryMedia;

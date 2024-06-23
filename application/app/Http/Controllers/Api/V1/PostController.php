@@ -2,23 +2,20 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Helpers\CompetitionHelper;
 use App\Helpers\NotificationHelper;
 use App\Helpers\RuleHelper;
 use App\Http\Resources\CompetitionResource;
 use App\Http\Resources\PostCommentResource;
-use App\Http\Resources\PostImageResource;
-use App\Http\Resources\PostJustified;
 use App\Http\Resources\PostJustifiedResource;
-use App\Http\Resources\PostMediaResource;
 use App\Http\Resources\PostObjectionResource;
 use App\Http\Resources\PostOrganizerResource;
 use App\Http\Resources\PostReportResource;
 use App\Http\Resources\PostResource;
 use App\Http\Resources\PostVoterResource;
+use App\Jobs\Media\CheckNSFWtext;
 use App\Jobs\Media\UnlinkS3Media;
-use App\Jobs\UploadImageToS3;
-use App\Jobs\UploadVideoToS3;
+use App\Jobs\Media\UploadImageToS3;
+use App\Jobs\Media\UploadVideoToS3;
 use App\Mail\Post\PostApproveAlert;
 use App\Mail\Post\PostObjectionAlert;
 use App\Mail\Post\PostPublishAlert;
@@ -27,17 +24,12 @@ use App\Mail\Post\PostVoteAlert;
 use App\Models\Competition;
 use App\Models\Post;
 use App\Models\PostComment;
-use App\Models\PostImage;
 use App\Models\PostMedia;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
-use Image;
-use FFMpeg;
-use Illuminate\Support\Facades\URL;
 
 class PostController extends BaseController
 {
@@ -132,6 +124,8 @@ class PostController extends BaseController
             ]);
 
             DB::commit();
+
+            CheckNSFWtext::dispatch($post);
 
             return $this->resData(PostResource::make($post));
         } catch (\Throwable $th) {
@@ -250,19 +244,33 @@ class PostController extends BaseController
     }
     public function update(Request $request, Competition $competition, Post $post)
     {
-        $post_rules = RuleHelper::rules("post");
-        $rules = [
-            "description" => ["nullable", "max:450"],
-        ];
-        $errors = $this->reqValidate($request->all(), $rules, );
-        if ($errors)
-            return $errors;
 
-        $post->update([
-            'description' => $request->description
-        ]);
+        try {
 
-        return $this->resData(CompetitionResource::make($competition));
+            $rules = [
+                "description" => ["nullable", "max:450"],
+            ];
+
+            $errors = $this->reqValidate($request->all(), $rules, );
+            if ($errors)
+                return $errors;
+
+            DB::beginTransaction();
+
+            $post->update([
+                'description' => $request->description
+            ]);
+
+            DB::commit();
+
+            CheckNSFWtext::dispatch($post);
+
+            return $this->resData(CompetitionResource::make($competition));
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+
     }
 
     public function delete(Request $request, Competition $competition, Post $post)
