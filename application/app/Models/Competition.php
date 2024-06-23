@@ -54,11 +54,11 @@ class Competition extends Model
     }
     public function scopeUpForParticipation($query)
     {
-        return $query->published()->notOrganizerBySelf()->where("voting_start_at", ">", date("Y-m-d H:i:s"));
+        return $query->where("state", "participation_period");
     }
     public function scopeUpForVoting($query)
     {
-        return $query->published()->notOrganizerBySelf()->where("voting_start_at", "<", date("Y-m-d H:i:s"))->where("announcement_at", ">", date("Y-m-d H:i:s"));
+        return $query->published()->notOrganizerBySelf()->where("state", "voting_period");
     }
 
     // relations

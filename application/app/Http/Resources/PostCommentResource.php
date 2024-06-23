@@ -15,11 +15,13 @@ class PostCommentResource extends BaseResource
     {
         return [
             'id' => $this->id,
-            'competition_id' => $this->competition_id,
+            'post_id' => $this->post_id,
             'type' => $this->type,
             'text' => $this->text,
-            'hidden' => $this->hidden,
+            'hidden' => $this->hidden === 1,
+            'by' => UserResource::make($this->user),
             'date' => $this->time2str($this->created_at),
+            'replies' => PostCommentResource::collection($this->replies)
         ];
     }
 }

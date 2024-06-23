@@ -16,6 +16,7 @@ use App\Jobs\Media\CheckNSFWtext;
 use App\Jobs\Media\UnlinkS3Media;
 use App\Jobs\Media\UploadImageToS3;
 use App\Jobs\Media\UploadVideoToS3;
+use App\Jobs\ValidateComment;
 use App\Mail\Post\PostApproveAlert;
 use App\Mail\Post\PostObjectionAlert;
 use App\Mail\Post\PostPublishAlert;
@@ -78,6 +79,10 @@ class PostController extends BaseController
         }
 
         return $this->resData(PostResource::collection($votedPosts));
+    }
+    public function get_single(Request $request, Competition $competition, Post $post)
+    {
+        return $this->resData(PostResource::make($post));
     }
     public function personal(Request $request)
     {
@@ -468,20 +473,23 @@ class PostController extends BaseController
     {
         try {
             $rules = ['text' => "required|min:1|max:450"];
-            $errors = $this->reqValidate($request->all(), $rules, ['bad_word' => 'The :attribute cannot contain any inappropriate word.']);
+            $errors = $this->reqValidate($request->all(), $rules);
             if ($errors)
                 return $errors;
 
             DB::beginTransaction();
 
-            $reply = auth()->user()->competition_comments()->create([
-                "competition_id" => $post->id,
+            $comment = auth()->user()->post_comments()->create([
+                "post_id" => $post->id,
                 "text" => $request->text,
+                "type" => "comment",
             ]);
 
             DB::commit();
 
-            return $this->resData(PostCommentResource::make($reply));
+            ValidateComment::dispatch($comment);
+
+            return $this->resData(PostCommentResource::make($comment));
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
@@ -497,13 +505,15 @@ class PostController extends BaseController
 
             DB::beginTransaction();
 
-            $reply = auth()->user()->competition_comments()->create([
-                "competition_id" => $post->id,
+            $reply = auth()->user()->post_comments()->create([
+                "post_id" => $post->id,
                 "comment_id" => $post_comment->id,
                 "type" => "reply",
                 "text" => $request->text,
             ]);
             DB::commit();
+
+            ValidateComment::dispatch($reply);
 
             return $this->resData(PostCommentResource::make($reply));
         } catch (\Throwable $th) {

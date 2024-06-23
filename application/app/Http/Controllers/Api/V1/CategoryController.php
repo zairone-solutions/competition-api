@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Resources\CategoryResource;
+use App\Jobs\ValidateCategory;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -16,7 +17,10 @@ class CategoryController extends BaseController
         if ($errors)
             return $errors;
 
-        auth()->user()->category_suggests()->create(['title' => $request->title, "slug" => Str::slug($request->title)]);
+        $category = auth()->user()->category_suggests()->create(['title' => $request->title, "slug" => Str::slug($request->title)]);
+
+        ValidateCategory::dispatch($category);
+
 
         return $this->resMsg(['success' => "Category creation request has been sent successfully."]);
     }

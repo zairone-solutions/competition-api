@@ -53,28 +53,30 @@ Route::group(['namespace' => "\App\Http\Controllers\Api\V1"], function () {
         Route::get("competitions/explore", "CompetitionController@explore");
         Route::get("competitions/{category}/category", "CompetitionController@category_all");
         Route::post("competitions", "CompetitionController@store");
+        Route::get("competitions/single/{competition}", "CompetitionController@get_single");
         Route::post("competitions/calculate_financials", "CompetitionController@calculate_financials");
         Route::post("competitions/{competition}/publish", "CompetitionController@publish");
         Route::post("competitions/{competition}/participate", "CompetitionController@participate");
         Route::put("competitions/{competition}", "CompetitionController@update");
         Route::delete("competitions/{competition}", "CompetitionController@delete");
         Route::post("competitions/{competition}/verify_dates", "CompetitionController@verify_dates");
-        // Competition Comments
-        Route::get("competitions/{competition}/comments", "CompetitionController@comments_all");
-        Route::get("competitions/{competition}/comments/{competition_comment}", "CompetitionController@comment_replies_all");
-        Route::post("competitions/{competition}/comments", "CompetitionController@comments_store");
-        Route::post("competitions/{competition}/comments/{competition_comment}", "CompetitionController@comment_replies");
-        Route::put("competitions/{competition}/comments/{competition_comment}", "CompetitionController@comment_update");
 
         // Posts
         Route::get("posts", "PostController@personal");
         Route::get("posts/voted", "PostController@voted");
         Route::get("posts/winner", "PostController@winner");
         Route::get("posts/{competition}", "PostController@all");
+        Route::get("posts/single/{post}", "PostController@get_single");
         // Route::post("posts/{competition}", "PostController@store")->middleware("competition_participant");
         Route::post("posts_text/{competition}/draft", "PostController@store_text")->middleware("competition_participant");
         Route::post("posts_image/{competition}/draft/{post?}", "PostController@store_image")->middleware("competition_participant");
         Route::post("posts_video/{competition}/draft/{post?}", "PostController@store_video")->middleware("competition_participant");
+        // Post Comments
+        Route::get("posts/{post}/comments", "PostController@comments_all");
+        Route::get("posts/{post}/comments/{post_comment}", "PostController@comment_replies_all");
+        Route::post("posts/{post}/comments", "PostController@comments_store");
+        Route::post("posts/{post}/comments/{post_comment}", "PostController@comment_replies");
+        Route::patch("posts/{post}/comments/{post_comment}", "PostController@comment_update");
 
         Route::put("posts/{competition}/update/{post}", "PostController@update")->middleware("competition_participant");
         Route::delete("posts/{competition}/delete_draft/{post}", "PostController@delete")->middleware("competition_participant");
