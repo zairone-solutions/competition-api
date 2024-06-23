@@ -25,7 +25,7 @@ class PostResource extends BaseResource
             "votedByMe" => FALSE,
             "user" => UserResource::make($this->user),
             'media' => PostMediaResource::collection($this->media),
-            "competition" => CompetitionMinimalResource::make($this->competition)
+            "competition" => CompetitionResource::make($this->competition)
         ];
 
         if ($this->votes()->where("voter_id", auth()->id())->count()) {

@@ -72,7 +72,14 @@ class CompetitionController extends BaseController
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
         }
     }
-
+    public function get_single(Request $request, Competition $competition)
+    {
+        try {
+            return $this->resData(CompetitionResource::make($competition));
+        } catch (\Throwable $th) {
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
     public function calculate_financials(Request $request)
     {
         try {
@@ -337,7 +344,7 @@ class CompetitionController extends BaseController
             }
 
             $competition->published_at = date("Y-m-d H:i:s", strtotime("now"));
-            $competition->state = "ready_for_participation";
+            $competition->state = "participation_period";
 
             DB::beginTransaction();
 

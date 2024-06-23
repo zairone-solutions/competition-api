@@ -2,6 +2,10 @@
 
 namespace App\Jobs\Media;
 
+use App\Helpers\NotificationHelper;
+use App\Helpers\RealTimeHelper;
+use App\Http\Resources\PostResource;
+use App\Models\Post;
 use App\Models\PostMedia;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -10,6 +14,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
+
 class CheckNSFWimage implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -52,6 +57,13 @@ class CheckNSFWimage implements ShouldQueue
 
                     if ($result['data']['score'] > 0.5) {
                         $this->media->delete();
+
+                        $post = Post::findOrFail($this->media->post_id);
+
+                        RealTimeHelper::sendMessage("post-updated", 'competition-' . $post->competition_id . "-post-" . $this->media->post_id, ['post' => PostResource::make($post)]);
+
+                        NotificationHelper::send($post->user_id, $post->user->notification_token, "Bad content warning!", "bad_content", "Your uploaded media was rated as NSFW (Not Safe For Work), and it is deleted from the draft.");
+
                     }
 
                 }

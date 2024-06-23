@@ -23,9 +23,9 @@ class CompetitionResource extends BaseResource
             "slug" => $this->slug,
             "paid" => $this->paid == "1",
             "financials" => [
-                "entry_fee" => ($this->financial->entry_fee),
-                "prize_money" => ($this->financial->prize_money),
-                "total_amount" => ($this->financial->total),
+                "entry_fee" => (int) $this->financial->entry_fee,
+                "prize_money" => (int) $this->financial->prize_money,
+                "total_amount" => (int) $this->financial->total,
             ],
             "participations" => $this->participants()->count(),
             "participants_allowed" => $this->participants_allowed,

@@ -14,6 +14,7 @@ class PostComment extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        "user_id",
         "post_id",
         "comment_id",
         "text",
@@ -38,6 +39,10 @@ class PostComment extends Model
         return $query->where('hidden', 0);
     }
     // relations
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
     public function replies()
     {
         return $this->hasMany(self::class, 'comment_id');
