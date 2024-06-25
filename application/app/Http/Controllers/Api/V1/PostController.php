@@ -58,7 +58,7 @@ class PostController extends BaseController
     }
     public function winner(Request $request)
     {
-        return $this->resData(PostResource::collection(Post::where("won", 1)->limit(5)->get()));
+        return $this->resData(PostResource::collection(Post::where("won", 1)->orderBy("created_at", "DESC")->limit(10)->get()));
     }
     public function voted(Request $request)
     {
