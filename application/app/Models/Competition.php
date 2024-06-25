@@ -54,7 +54,7 @@ class Competition extends Model
     }
     public function scopeUpForParticipation($query)
     {
-        return $query->where("state", "participation_period");
+        return $query->published()->notOrganizerBySelf()->where("state", "participation_period");
     }
     public function scopeUpForVoting($query)
     {
