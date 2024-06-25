@@ -19,7 +19,7 @@ class PostVoterResource extends BaseResource
             'posted_at' => $this->time2str($this->created_at),
             "votedByMe" => FALSE,
             'votes' => $votes,
-            "winner" => $this->competition->winner_id == $this->user->id,
+            "winner" => $this->won === 1,
             "user" => UserResource::make($this->user),
             'media' => PostMediaResource::collection($this->media),
         ];
