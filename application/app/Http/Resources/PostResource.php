@@ -14,16 +14,24 @@ class PostResource extends BaseResource
     public function toArray($request)
     {
         $votes = time() > strtotime($this->competition->announcement_at) ? $this->number_format_short($this->votes->count()) : NULL;
-        return [
+        $data = [
             'id' => $this->id,
             'description' => $this->description,
             'state' => $this->state,
             'posted_at' => $this->time2str($this->created_at),
             'votes' => $votes,
             "winner" => $this->competition->winner_id == $this->user->id,
+            "approved" => $this->approved_at !== null,
+            "votedByMe" => FALSE,
             "user" => UserResource::make($this->user),
-            'images' => PostMediaResource::collection($this->media),
+            'media' => PostMediaResource::collection($this->media),
+            "competition" => CompetitionPostResource::make($this->competition)
         ];
+
+        if ($this->votes()->where("voter_id", auth()->id())->count()) {
+            $data['votedByMe'] = TRUE;
+        }
+        return $data;
     }
 
 }

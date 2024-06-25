@@ -24,11 +24,11 @@ class CompetitionOrganizerResource extends BaseResource
             "slug" => $this->slug,
             "paid" => $this->paid == "1",
             "financials" => [
-                "entry_fee" => ($this->financial->entry_fee),
-                "cost" => ($this->financial->cost),
-                "platform_charges" => ($this->financial->platform_charges),
-                "prize_money" => ($this->financial->prize_money),
-                "total_amount" => ($this->financial->total),
+                "entry_fee" => (int) $this->financial->entry_fee,
+                "cost" => (int) $this->financial->cost,
+                "platform_charges" => (int) $this->financial->platform_charges,
+                "prize_money" => (int) $this->financial->prize_money,
+                "total_amount" => (int) $this->financial->total,
             ],
             "participations" => $this->participants()->count(),
             "participants_allowed" => $this->participants_allowed,
@@ -40,9 +40,12 @@ class CompetitionOrganizerResource extends BaseResource
             "expired" => strtotime($this->announcement_at) < time(),
             'category' => CategoryResource::make($this->category),
             "organizer" => UserResource::make($this->organizer),
-            "winner" => UserResource::make($this->winner),
+            "winners" => [],
             "payment" => CompetitionPaymentResource::make($this->payments()->byOrganizer($this->organizer_id)->verified()->first()),
         ];
+        foreach ($this->winners()->get() as $winner) {
+            $data['winners'][] = UserResource::make($winner->winner);
+        }
 
         return $data;
     }

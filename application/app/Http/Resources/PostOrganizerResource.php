@@ -21,8 +21,9 @@ class PostOrganizerResource extends BaseResource
             'hidden' => $this->hidden,
             'objection' => $this->objection ? PostObjectionResource::make($this->objection) : NULL,
             "winner" => $this->competition->winner_id == $this->user->id,
+            "approved" => $this->approved_at !== null,
             "user" => UserResource::make($this->user),
-            'images' => PostImageResource::collection($this->images),
+            'media' => PostMediaResource::collection($this->media),
         ];
     }
 }

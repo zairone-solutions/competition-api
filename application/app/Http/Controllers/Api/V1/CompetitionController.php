@@ -13,7 +13,9 @@ use App\Mail\Competition\CompetitionPublished;
 use App\Models\Competition;
 use App\Models\CompetitionComment;
 use App\Models\PostComment;
+use App\Models\Category;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -22,10 +24,10 @@ use Illuminate\Support\Facades\Mail;
 
 class CompetitionController extends BaseController
 {
-    private function voted()
+    private function voted(User $user)
     {
         $voted = [];
-        foreach (auth()->user()->votes()->get() as $vote) {
+        foreach ($user->votes()->get() as $vote) {
             $voted[] = $vote->competition()->first();
         }
         return $voted;
@@ -37,15 +39,47 @@ class CompetitionController extends BaseController
 
         return $cost_per_participant * $participants;
     }
-    private function participated()
+    private function participated(User $user)
     {
         $participated = [];
-        foreach (auth()->user()->participations()->get() as $vote) {
+        foreach ($user->participations()->get() as $vote) {
             $participated[] = $vote->competition()->first();
         }
         return $participated;
     }
 
+    public function category_all(Request $request, Category $category)
+    {
+        try {
+            return $this->resData(CompetitionResource::collection($category->competitions()->get()));
+        } catch (\Throwable $th) {
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
+    public function participation(Request $request)
+    {
+        try {
+            return $this->resData(CompetitionResource::collection(Competition::upForParticipation()->get()));
+        } catch (\Throwable $th) {
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
+    public function explore(Request $request)
+    {
+        try {
+            return $this->resData(CompetitionResource::collection(Competition::upForVoting()->get()));
+        } catch (\Throwable $th) {
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
+    public function get_single(Request $request, Competition $competition)
+    {
+        try {
+            return $this->resData(CompetitionResource::make($competition));
+        } catch (\Throwable $th) {
+            return $this->resMsg(['error' => $th->getMessage()], 'server', 500);
+        }
+    }
     public function calculate_financials(Request $request)
     {
         try {
@@ -67,18 +101,30 @@ class CompetitionController extends BaseController
     {
 
         try {
+
+            $user = auth()->user();
+            if ($request->has("username")) {
+                if ($findUser = User::where(["username" => $request->get("username")])->first()) {
+                    $user = $findUser;
+                }
+            }
+
             switch ($request->get("type")) {
                 case 'voted':
-                    return $this->resData(CompetitionResource::collection($this->voted()));
+                    return $this->resData(CompetitionResource::collection($this->voted($user)));
                 case 'participated':
-                    return $this->resData(CompetitionResource::collection($this->participated()));
+                    return $this->resData(CompetitionResource::collection($this->participated($user)));
                 case 'organized':
-                    return $this->resData(CompetitionOrganizerResource::collection(auth()->user()->competitions()->get()));
+                    return $user->id !== auth()->id() ?
+                        $this->resData(CompetitionResource::collection($user->competitions()->get())) :
+                        $this->resData(CompetitionOrganizerResource::collection($user->competitions()->get()));
                 default:
                     return $this->resData([
-                        'organized' => CompetitionOrganizerResource::collection(auth()->user()->competitions()->get()),
-                        'participated' => CompetitionResource::collection($this->participated()),
-                        'voted' => CompetitionResource::collection($this->voted())
+                        'organized' => $user->id !== auth()->id() ?
+                            CompetitionResource::collection($user->competitions()->get()) :
+                            CompetitionOrganizerResource::collection($user->competitions()->get()),
+                        'participated' => CompetitionResource::collection($this->participated($user)),
+                        'voted' => CompetitionResource::collection($this->voted($user))
                     ]);
             }
         } catch (\Throwable $th) {
@@ -93,7 +139,7 @@ class CompetitionController extends BaseController
             return $slug;
         }
         do {
-            $slug = Str::slug($title) . "-" .  rand(111, 9999);
+            $slug = Str::slug($title) . "-" . rand(111, 9999);
         } while (Competition::where("slug", $slug)->count() != 0);
 
         return $slug;
@@ -104,16 +150,19 @@ class CompetitionController extends BaseController
             $competition_rules = RuleHelper::rules("competition");
 
             $rules = [
-                'category_id' => ["required", Rule::exists('categories', "id")->where(function ($query) use ($request) {
-                    return $query->where(['id' => $request->category_id, "verified" => 1]);
-                }),],
+                'category_id' => [
+                    "required",
+                    Rule::exists('categories', "id")->where(function ($query) use ($request) {
+                        return $query->where(['id' => $request->category_id, "verified" => 1]);
+                    }),
+                ],
                 'title' => ["required", "max:50", "min:3", "bad_word"],
                 'description' => ["nullable", "max:450", "bad_word"],
                 'entry_fee' => ["required", "numeric", "min:" . $competition_rules["min_entry_fee"], "max:" . $competition_rules["max_prize_money"]],
                 'prize_money' => ["required", "numeric", "min:" . $competition_rules["min_prize_money"], "max:" . $competition_rules["max_prize_money"]],
                 'participants_allowed' => ["required", "numeric", "min:" . $competition_rules["min_participants_allowed"], "max:" . $competition_rules["max_participants_allowed"]],
-                "announcement_at" => ["required", "after_or_equal:" .  $competition_rules['min_competition_days'] . " days", "before_or_equal:" . $competition_rules['max_competition_days'] . " days"],
-                "voting_start_at" => ["required", "after_or_equal:" .  $competition_rules['voting_delay_days'] . " days"],
+                "announcement_at" => ["required", "after_or_equal:" . $competition_rules['min_competition_days'] . " days", "before_or_equal:" . $competition_rules['max_competition_days'] . " days"],
+                "voting_start_at" => ["required", "after_or_equal:" . $competition_rules['voting_delay_days'] . " days"],
             ];
             $errors = $this->reqValidate($request->all(), $rules, [
                 'category_id.exists' => "Invalid category.",
@@ -122,7 +171,8 @@ class CompetitionController extends BaseController
                 'announcement_at.after_or_equal' => "The announcement must be {$competition_rules['min_competition_days']} days after starting the competition.",
                 'announcement_at.before_or_equal' => "The announcement must be {$competition_rules['max_competition_days']} days from now."
             ]);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
 
             DB::beginTransaction();
 
@@ -165,17 +215,20 @@ class CompetitionController extends BaseController
             $competition_rules = RuleHelper::rules("competition");
 
             $rules = [
-                'category_id' => ["required", Rule::exists('categories', "id")->where(function ($query) use ($request) {
-                    return $query->where(['id' => $request->category_id, "verified" => 1]);
-                }),],
+                'category_id' => [
+                    "required",
+                    Rule::exists('categories', "id")->where(function ($query) use ($request) {
+                        return $query->where(['id' => $request->category_id, "verified" => 1]);
+                    }),
+                ],
                 'title' => ["required", "max:50", "min:3", "bad_word"],
                 'slug' => ["required", "unique:competitions,slug," . $competition->id, "max:100", "min:3", "regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/", "bad_word"],
                 'description' => ["nullable", "max:450", "bad_word"],
                 'entry_fee' => ["required", "numeric", "min:" . $competition_rules["min_entry_fee"], "max:" . $competition_rules["max_prize_money"]],
                 'prize_money' => ["required", "numeric", "min:" . $competition_rules["min_prize_money"], "max:" . $competition_rules["max_prize_money"]],
                 'participants_allowed' => ["required", "numeric", "min:" . $competition_rules["min_participants_allowed"], "max:" . $competition_rules["max_participants_allowed"]],
-                "announcement_at" => ["required", "after_or_equal:" .  $competition_rules['min_competition_days'] . " days", "before_or_equal:" . $competition_rules['max_competition_days'] . " days"],
-                "voting_start_at" => ["required", "after_or_equal:" .  $competition_rules['voting_delay_days'] . " days"],
+                "announcement_at" => ["required", "after_or_equal:" . $competition_rules['min_competition_days'] . " days", "before_or_equal:" . $competition_rules['max_competition_days'] . " days"],
+                "voting_start_at" => ["required", "after_or_equal:" . $competition_rules['voting_delay_days'] . " days"],
             ];
             $errors = $this->reqValidate($request->all(), $rules, [
                 'category_id.exists' => "Invalid category.",
@@ -186,7 +239,8 @@ class CompetitionController extends BaseController
                 'announcement_at.after_or_equal' => "The announcement date must be {$competition_rules['min_competition_days']} days after starting the competition.",
                 'announcement_at.before_or_equal' => "The announcement date must be {$competition_rules['max_competition_days']} days from now."
             ]);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
             // time validations
             if (strtotime($request->announcement_at) > strtotime("+" . $competition_rules['max_competition_days'] . " days")) {
                 return $this->resMsg(["error" => "Announcement date must be before " . $competition_rules['max_competition_days'] . " days."], "validation", 403);
@@ -241,15 +295,16 @@ class CompetitionController extends BaseController
             $competition_rules = RuleHelper::rules("competition");
 
             $rules = [
-                "announcement_at" => ["required", "after_or_equal:" .  $competition_rules['min_competition_days'] . " days", "before_or_equal:" . $competition_rules['max_competition_days'] . " days"],
-                "voting_start_at" => ["required", "after_or_equal:" .  $competition_rules['voting_delay_days'] . " days"],
+                "announcement_at" => ["required", "after_or_equal:" . $competition_rules['min_competition_days'] . " days", "before_or_equal:" . $competition_rules['max_competition_days'] . " days"],
+                "voting_start_at" => ["required", "after_or_equal:" . $competition_rules['voting_delay_days'] . " days"],
             ];
             $errors = $this->reqValidate($request->all(), $rules, [
                 'voting_start_at.after_or_equal' => "The voting must start after {$competition_rules['voting_delay_days']} days from today.",
                 'announcement_at.after_or_equal' => "The announcement must be {$competition_rules['min_competition_days']} days after starting the competition.",
                 'announcement_at.before_or_equal' => "The announcement must be {$competition_rules['max_competition_days']} days from now."
             ]);
-            if ($errors) return $errors;
+            if ($errors)
+                return $errors;
             // time validations
             if (strtotime($request->announcement_at) > strtotime("+" . $competition_rules['max_competition_days'] . " days")) {
                 return $this->resMsg(["error" => "Announcement must be before " . $competition_rules['max_competition_days'] . " days."], "validation", 403);
@@ -284,11 +339,12 @@ class CompetitionController extends BaseController
             if (strtotime($competition->voting_start_at) <= (strtotime('now') + (((int) $competition_rules['voting_delay_days']) * 24 * 60 * 60))) {
                 return $this->resMsg(["error" => "Voting date must be after " . $competition_rules['voting_delay_days'] . " days from today. Please update to publish."], "validation", 403);
             }
-            if (strtotime($competition->announcement_at) <= (strtotime('now') + ((int) $competition_rules['min_competition_days']  * 24 * 60 * 60))) {
+            if (strtotime($competition->announcement_at) <= (strtotime('now') + ((int) $competition_rules['min_competition_days'] * 24 * 60 * 60))) {
                 return $this->resMsg(["error" => "Announcement date must be after " . $competition_rules['min_competition_days'] . " days from today. Please update to publish."], "validation", 403);
             }
 
             $competition->published_at = date("Y-m-d H:i:s", strtotime("now"));
+            $competition->state = "participation_period";
 
             DB::beginTransaction();
 
@@ -352,7 +408,7 @@ class CompetitionController extends BaseController
 
             DB::commit();
 
-            return $this->resMsg(["success" => "You have participated successfully."]);
+            return $this->resData(CompetitionResource::make($competition));
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->resMsg(['error' => $th->getMessage()], 'server', 500);

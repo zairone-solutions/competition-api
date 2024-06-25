@@ -24,9 +24,21 @@ class Category extends Model
     {
         return $query->where('verified', '=', '1');
     }
+    public function scopeTop($query)
+    {
+        return $query->orderBy('created_at', 'ASC');
+    }
+    public function scopeNew($query)
+    {
+        return $query->orderBy('created_at', 'DESC');
+    }
     // relations
     public function suggested_by()
     {
         return $this->belongsTo(User::class, "suggest_id");
+    }
+    public function competitions()
+    {
+        return $this->hasMany(Competition::class);
     }
 }

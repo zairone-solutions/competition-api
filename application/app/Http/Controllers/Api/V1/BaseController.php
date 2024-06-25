@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Helpers\RealTimeHelper;
+use App\Http\Resources\NotificationResource;
 use App\Models\Notification;
 use App\Models\User;
 
@@ -37,7 +39,10 @@ class BaseController extends Controller
     {
         $avatar = $user->avatar ?? asset('storage/images/"user.png');
         return [
-            "full_name" => $user->full_name, "email" => $user->email, "username" => $user->username, "avatar" => $avatar
+            "full_name" => $user->full_name,
+            "email" => $user->email,
+            "username" => $user->username,
+            "avatar" => $avatar
         ];
     }
     public function reqValidate($data, $rules, $messages = [])
@@ -51,8 +56,13 @@ class BaseController extends Controller
     public function triggerNotification($user_id, $token, $title, $for = "", $description = "", $data = array(), $push = "push")
     {
         try {
-            Notification::create(["user_id" => $user_id, "title" => $title, "description" => $description, "for" => $for, "data" => json_encode($data)]);
-            if ($token && $push == "push") PushNotification::send([$token], $title, $description, "");
+            $notification = Notification::create(["user_id" => $user_id, "title" => $title, "description" => $description, "for" => $for, "data" => json_encode($data)]);
+
+            RealTimeHelper::sendMessage("notifications", 'user-' . $user_id, ['notification' => NotificationResource::make($notification)]);
+
+            if ($token && $push === "push") {
+                PushNotification::send([$token], $title, $description);
+            }
         } catch (\Throwable $th) {
         }
     }

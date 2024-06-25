@@ -15,12 +15,11 @@ class Competition extends Model
      */
     protected $fillable = [
         "category_id",
-        "winner_id",
-        "winner_post",
         "title",
         "description",
         "slug",
         "participants_allowed",
+        "state",
         "announcement_at",
         "voting_start_at",
         "published_at",
@@ -41,6 +40,27 @@ class Competition extends Model
     {
         return $query->whereNotNull('published_at');
     }
+    public function scopeNotOrganizerBySelf($query)
+    {
+        return $query->where("organizer_id", "!=", auth()->id());
+    }
+    public function scopeReadyForVoting($query)
+    {
+        return $query->published()->where("state", "participation_period")->where("voting_start_at", "<=", date("Y-m-d H:i:s"));
+    }
+    public function scopeReadyForAnnouncement($query)
+    {
+        return $query->published()->where("state", "voting_period")->where("announcement_at", "<=", date("Y-m-d H:i:s"));
+    }
+    public function scopeUpForParticipation($query)
+    {
+        return $query->where("state", "participation_period");
+    }
+    public function scopeUpForVoting($query)
+    {
+        return $query->published()->notOrganizerBySelf()->where("state", "voting_period");
+    }
+
     // relations
     public function organizer()
     {
@@ -66,6 +86,11 @@ class Competition extends Model
     {
         return $this->hasMany(CompetitionParticipant::class);
     }
+    public function winners()
+    {
+        return $this->hasMany(CompetitionWinner::class);
+    }
+
     public function payments()
     {
         return $this->hasMany(Payment::class);

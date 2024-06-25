@@ -3,7 +3,7 @@
 namespace App\Jobs\Media;
 
 use Ably\AblyRest;
-use App\Helpers\RealTimeHelper;
+use App\Helpers\CompetitionHelper;
 use App\Http\Resources\PostResource;
 use App\Models\Competition;
 use App\Models\Post;
@@ -14,26 +14,22 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
-class UnlinkTemporaryMedia implements ShouldQueue
+class UnlinkS3Media implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $temporaryFilePath;
-    protected $media;
-    protected $competition;
+    protected $url;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($temporaryFilePath, Competition $competition, PostMedia $media)
+    public function __construct($url)
     {
-        $this->temporaryFilePath = $temporaryFilePath;
-        $this->competition = $competition;
-        $this->media = $media;
-
+        $this->url = $url;
     }
 
     /**
@@ -43,11 +39,10 @@ class UnlinkTemporaryMedia implements ShouldQueue
      */
     public function handle()
     {
-        unlink(storage_path("app/" . $this->temporaryFilePath));
+        $uri = CompetitionHelper::extractUri($this->url);
 
-        $post = Post::findOrFail($this->media->post_id);
-
-        RealTimeHelper::sendMessage("post-updated", 'competition-' . $this->competition->id . "-post-" . $this->media->post_id, ['post' => PostResource::make($post)]);
-
+        if (Storage::disk('s3')->exists($uri)) {
+            Storage::disk('s3')->delete($uri);
+        }
     }
 }

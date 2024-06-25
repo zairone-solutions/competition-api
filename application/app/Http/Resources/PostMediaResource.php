@@ -14,10 +14,10 @@ class PostMediaResource extends BaseResource
     {
         return [
             'id' => $this->id,
-            'url' => $this->media,
+            'url' => str_replace(env("AWS_URL"), "https://d34mvolpbdvcbl.cloudfront.net", $this->media),
             'thumbnail' => $this->thumbnail,
             'type' => $this->type,
-            'mime' => $this->mime,
+            'mime' => $this->mime_type,
         ];
     }
 }
