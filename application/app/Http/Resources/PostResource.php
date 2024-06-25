@@ -20,7 +20,7 @@ class PostResource extends BaseResource
             'state' => $this->state,
             'posted_at' => $this->time2str($this->created_at),
             'votes' => $votes,
-            "winner" => $this->competition->winner_id == $this->user->id,
+            "winner" => $this->won === 1,
             "approved" => $this->approved_at !== null,
             "votedByMe" => FALSE,
             "user" => UserResource::make($this->user),
