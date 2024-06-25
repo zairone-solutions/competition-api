@@ -1,15 +1,34 @@
 @extends('layouts.app', ['title' => __('User Profile')])
 
 @section('content')
-@include('users.partials.header', [
+{{-- @include('users.partials.header', [
 'title' => __('Hello') . ' '. auth()->user()->name,
 'description' => __('This is your profile page. You can see the progress you\'ve made with your work and manage your projects or assigned tasks'),
 'class' => 'col-lg-7'
-])
+]) --}}
 
-<div class="container-fluid mt--7">
+<div class="header bg-primary pb-6 pt-5 pt-lg-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-12 col-12">
+                    <h6 class="h2 text-white d-inline-block mb-0">Profile</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="#">Profile</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Edit profile</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid mt--6">
     <div class="row">
-        <div class="col-xl-4 order-xl-2 mb-5 mb-xl-0">
+        {{-- <div class="col-xl-4 order-xl-2 mb-5 mb-xl-0">
             <div class="card card-profile shadow">
                 <div class="row justify-content-center">
                     <div class="col-lg-3 order-lg-2">
@@ -64,8 +83,9 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-xl-8 order-xl-1">
+        </div> --}}
+
+        <div class="col order-xl-1">
             <div class="card bg-secondary shadow">
                 <div class="card-header bg-white border-0">
                     <div class="row align-items-center">
@@ -73,7 +93,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <form method="post" action="{{ route('profile.update') }}" autocomplete="off">
+                    <form method="POST" action="{{ route('profile.update') }}" autocomplete="off" enctype="multipart/form-data">
                         @csrf
                         @method('put')
 
@@ -89,18 +109,18 @@
                         @endif
 
 
-                        <div class="pl-lg-4">
-                            <div class="form-group{{ $errors->has('name') ? ' has-danger' : '' }}">
-                                <label class="form-control-label" for="input-name">{{ __('Name') }}</label>
-                                <input type="text" name="name" id="input-name" class="form-control form-control-alternative{{ $errors->has('name') ? ' is-invalid' : '' }}" placeholder="{{ __('Name') }}" value="{{ old('name', auth()->user()->name) }}" required autofocus>
+                        <div class="pl-lg-4 row">
+                            <div class="form-group col-12 col-lg-6{{ $errors->has('full_name') ? ' has-danger' : '' }}">
+                                <label class="form-control-label" for="input-full-name">{{ __('Full Name') }}</label>
+                                <input type="text" name="full_name" id="input-full-name" class="form-control form-control-alternative{{ $errors->has('full_name') ? ' is-invalid' : '' }}" placeholder="{{ __('Full Name') }}" value="{{ old('full_name', auth()->user()->full_name) }}" required autofocus>
 
-                                @if ($errors->has('name'))
+                                @if ($errors->has('full_name'))
                                 <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $errors->first('name') }}</strong>
+                                    <strong>{{ $errors->first('full_name') }}</strong>
                                 </span>
                                 @endif
                             </div>
-                            <div class="form-group{{ $errors->has('email') ? ' has-danger' : '' }}">
+                            <div class="form-group col-12 col-lg-6{{ $errors->has('email') ? ' has-danger' : '' }}">
                                 <label class="form-control-label" for="input-email">{{ __('Email') }}</label>
                                 <input type="email" name="email" id="input-email" class="form-control form-control-alternative{{ $errors->has('email') ? ' is-invalid' : '' }}" placeholder="{{ __('Email') }}" value="{{ old('email', auth()->user()->email) }}" required>
 
@@ -111,7 +131,7 @@
                                 @endif
                             </div>
 
-                            <div class="text-center">
+                            <div class="text-center col-12">
                                 <button type="submit" class="btn btn-success mt-4">{{ __('Save') }}</button>
                             </div>
                         </div>
@@ -132,8 +152,8 @@
                         </div>
                         @endif
 
-                        <div class="pl-lg-4">
-                            <div class="form-group{{ $errors->has('old_password') ? ' has-danger' : '' }}">
+                        <div class="pl-lg-4 row">
+                            <div class="form-group col-12 col-lg-6{{ $errors->has('old_password') ? ' has-danger' : '' }}">
                                 <label class="form-control-label" for="input-current-password">{{ __('Current Password') }}</label>
                                 <input type="password" name="old_password" id="input-current-password" class="form-control form-control-alternative{{ $errors->has('old_password') ? ' is-invalid' : '' }}" placeholder="{{ __('Current Password') }}" value="" required>
 
@@ -143,7 +163,7 @@
                                 </span>
                                 @endif
                             </div>
-                            <div class="form-group{{ $errors->has('password') ? ' has-danger' : '' }}">
+                            <div class="form-group col-12 col-lg-6{{ $errors->has('password') ? ' has-danger' : '' }}">
                                 <label class="form-control-label" for="input-password">{{ __('New Password') }}</label>
                                 <input type="password" name="password" id="input-password" class="form-control form-control-alternative{{ $errors->has('password') ? ' is-invalid' : '' }}" placeholder="{{ __('New Password') }}" value="" required>
 
@@ -153,12 +173,12 @@
                                 </span>
                                 @endif
                             </div>
-                            <div class="form-group">
+                            <div class="form-group col-12 col-lg-6">
                                 <label class="form-control-label" for="input-password-confirmation">{{ __('Confirm New Password') }}</label>
                                 <input type="password" name="password_confirmation" id="input-password-confirmation" class="form-control form-control-alternative" placeholder="{{ __('Confirm New Password') }}" value="" required>
                             </div>
 
-                            <div class="text-center">
+                            <div class="text-center col-12">
                                 <button type="submit" class="btn btn-success mt-4">{{ __('Change password') }}</button>
                             </div>
                         </div>

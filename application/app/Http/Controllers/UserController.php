@@ -39,6 +39,7 @@ class UserController extends Controller
                     ->addColumn('action', function($row){
                         $btn = '<a href="' . route('edituser', $row->id) . '" class="edit btn btn-primary btn-sm">Edit</a> ';
                         $btn .= '<a href="' . route('deleteuser', $row->id) . '" class="edit btn btn-danger btn-sm delete-user" >Delete</a>';
+                        $btn .= '<a href="' . route('allledgers') . '" class="edit btn btn-info btn-sm" >...</a>';
                         return $btn;
                     })
                     ->rawColumns(['action'])
@@ -58,10 +59,15 @@ class UserController extends Controller
             'username' => 'required',
             'email' => 'required|email|unique:users,email',
             'full_name' => 'required',
-            'phone_no' => 'nullable',
-            'type' => 'required|in:voter,organizer,participant,admin',
+            // 'phone_no' => 'nullable',
+            'phone_no' => 'nullable|string|max:20', 
+            // 'type' => 'required|in:voter,organizer,participant,admin',
+            'type' => 'required|in:voter,organizer,participant',
             'password' => 'required|min:6',
         ]);
+
+        // Set phone code from request to validated data
+        $validatedData['phone_code'] = $request->phone_code;
 
         // Hash the password before saving to the database
         $validatedData['password'] = bcrypt($request->password);
@@ -89,8 +95,12 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $id,
             'full_name' => 'required',
             'phone_no' => 'nullable',
-            'type' => 'required|in:voter,organizer,participant,admin',
+            //'type' => 'required|in:voter,organizer,participant,admin',
+            'type' => 'required|in:voter,organizer,participant',
         ]);
+
+        // Set phone code from request to validated data
+        $validatedData['phone_code'] = $request->phone_code;
 
         // Hash the password before saving to the database if it's provided
         if ($request->filled('password')) {

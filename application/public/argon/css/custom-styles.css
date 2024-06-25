@@ -1,0 +1,77 @@
+.iti.iti--allow-dropdown.iti--separate-dial-code {
+  display: block;
+}
+.alert ul {
+  margin-bottom: auto;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  width: 50px;
+  height: 24px;
+  background-color: transparent;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+.switch .switch-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+}
+.switch-primary > .switch-input:checked ~ .switch-label {
+  background-color: #5E72E4 !important;
+  border-color: #5E72E4;
+}
+.switch-pill .switch-handle, .switch-pill .switch-label {
+  border-radius: 50px !important;
+}
+.switch .switch-label {
+  position: relative;
+  display: block;
+  height: inherit;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background-color: #f0f1f5;
+  border: 1px solid #e5e9f2;
+  border-radius: 0.25rem;
+  transition: opacity background-color 0.3s 0.3s ease-out;
+}
+.switch-primary > .switch-input:checked ~ .switch-handle {
+  border-color: transparent;
+}
+.switch .switch-input:checked ~ .switch-handle {
+  left: 28px;
+}
+.switch .switch-handle {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  border-radius: 1px;
+  transition: left 0.3s ease-out;
+}
+
+span.select2-selection.select2-selection--single {
+  border-color: rgba(50, 151, 211, .25);
+  transition: box-shadow .15s ease;
+  border: 0;
+  box-shadow: 0 1px 3px rgba(50, 50, 93, .15), 0 1px 0 rgba(0, 0, 0, .02);
+  line-height: 1.5;
+  width: 100%;
+  height: calc(2.75rem + 2px);
+  padding: .625rem .75rem;
+}
+
+span.select2-selection__arrow {
+  background-color: transparent !important;
+  border-left: none !important;
+  background-image: none !important;
+  height: 45px !important;
+}

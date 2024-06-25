@@ -21,4 +21,10 @@ class Ledger extends Model
         'amount',
         'type',
     ];
+
+    // relations
+    public function user_by()
+    {
+        return $this->belongsTo(User::class, "user_id");
+    }
 }

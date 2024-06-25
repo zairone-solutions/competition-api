@@ -14,12 +14,12 @@
             <div class="header-body">
                 <div class="row align-items-center py-4">
                     <div class="col-lg-12 col-12">
-                        <h6 class="h2 text-white d-inline-block mb-0">Users</h6>
+                        <h6 class="h2 text-white d-inline-block mb-0">Ledgers</h6>
                         <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
                             <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
                                 <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
-                                <li class="breadcrumb-item"><a href="#">Users</a></li>
-                                <li class="breadcrumb-item active" aria-current="page">All users</li>
+                                <li class="breadcrumb-item"><a href="#">Ledgers</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">All ledgers</li>
                             </ol>
                         </nav>
                     </div>
@@ -34,7 +34,7 @@
             <div class="col">
                 <div class="card bg-secondary shadow">
                     <div class="card-header bg-white border-0">
-                            <h3 class="mb-0">{{ __('All Users') }}</h3>
+                            <h3 class="mb-0">{{ __('All Ledgers') }}</h3>
                     </div>
                     <div class="card-body pt--3">
 
@@ -56,25 +56,29 @@
                             </div>
                         @endif
 
-
-                        <a href="{{ route('adduser') }}" class="btn btn-success mb-3">Add New User</a>
                         <div class="table-responsive" id="all-users-table-styling">
                             <div>
                                 <table class="table align-items-center data-table" >
                                     <thead class="thead-light">
                                         <tr>
                                             <th scope="col">No</th>
-                                            <th scope="col">Username</th>
-                                            <th scope="col">Email</th>
-                                            <th scope="col">Full Name</th>
-                                            <th scope="col">Phone Code</th>
-                                            <th scope="col">Phone No</th>
-                                            <th scope="col">User Type</th>
-                                            <th scope="col">Action</th>
+                                            <th scope="col">User Id</th>
+                                            <th scope="col">Payment Id</th>
+                                            <th scope="col">Description</th>
+                                            <th scope="col">Type</th>
+                                            <th scope="col">Amount</th>
+                                            <th scope="col">Transaction Date & Time</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                     </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th colspan="5" style="text-align:right">Total Amount:</th>
+                                            <th></th>
+                                            <th></th>
+                                        </tr>
+                                    </tfoot>
                                 </table>
                             </div>    
                         </div>
@@ -85,17 +89,56 @@
                                 var table = $('.data-table').DataTable({
                                     processing: true,
                                     serverSide: true,
-                                    ajax: "{{ route('allusers') }}",
+                                    ajax: "{{ route('allledgers') }}",
                                     columns: [
                                         {data: 'id', name: 'id'},
-                                        {data: 'username', name: 'username'},
-                                        {data: 'email', name: 'email'},
-                                        {data: 'full_name', name: 'full_name'},
-                                        {data: 'phone_code', name: 'phone_code'},
-                                        {data: 'phone_no', name: 'phone_no'},
+                                        {data: 'user_by', name: 'user_by'},
+                                        {data: 'payment_id', name: 'payment_id'},
+                                        {data: 'title', name: 'title'},
                                         {data: 'type', name: 'type'},
-                                        {data: 'action', name: 'action', orderable: true, searchable: false},
-                                    ]
+                                        {data: 'amount', name: 'amount'},
+                                        {
+                                            data: 'created_at', 
+                                            name: 'created_at', 
+                                            orderable: true, 
+                                            searchable: true,
+                                            render: function(data) {
+                                                return moment(data).format('Do MMM YYYY h:mm A');
+                                            }
+                                        },
+                                    ],
+                                    footerCallback: function (row, data, start, end, display) {
+                                        var api = this.api(), data;
+
+                                        // Remove the formatting to get integer data for summation
+                                        var intVal = function (i) {
+                                            return typeof i === 'string' ?
+                                                i.replace(/[\$,]/g, '') * 1 :
+                                                typeof i === 'number' ?
+                                                i : 0;
+                                        };
+
+                                        // Total over all pages
+                                        total = api
+                                            .column(5)
+                                            .data()
+                                            .reduce(function (a, b) {
+                                                return intVal(a) + intVal(b);
+                                            }, 0);
+
+                                        // Total over this page
+                                        pageTotal = api
+                                            .column(5, { page: 'current' })
+                                            .data()
+                                            .reduce(function (a, b) {
+                                                return intVal(a) + intVal(b);
+                                            }, 0);
+
+                                        // Update footer
+                                        $(api.column(5).footer()).html(
+                                            pageTotal + ' ( ' + total + ' total)'
+                                        );
+                                    }
                                 });
                                 // Function to hide the alerts after 5 seconds
                                 setTimeout(function(){
@@ -105,6 +148,9 @@
                             });
                         </script>
                         
+
+                        
+
                     </div>
                 </div>
             </div>
