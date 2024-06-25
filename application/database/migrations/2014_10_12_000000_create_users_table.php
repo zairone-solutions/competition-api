@@ -20,7 +20,8 @@ class CreateUsersTable extends Migration
             $table->string('full_name');
             $table->string('password')->nullable();
             $table->string('phone_code')->nullable();
-            $table->integer('phone_no')->nullable();
+            // $table->integer('phone_no')->nullable();
+            $table->string('phone_no', 20)->nullable();
             $table->enum('type', ['voter', 'organizer', 'participant', 'admin'])->default("voter");
             $table->double("balance")->default(0);
             $table->text("notification_token")->nullable();

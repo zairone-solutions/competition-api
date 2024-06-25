@@ -90,15 +90,39 @@
                         <i class="ni ni-tv-2 text-primary"></i> {{ __('Dashboard') }}
                     </a>
                 </li> --}}
-
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('allusers') }}">
-                        <i class="ni ni-circle-08 text-blue"></i> {{ __('Users') }}
+                    <a class="nav-link" href="{{ route('allcategories') }}">
+                        <i class="ni ni-single-copy-04 text-blue"></i> {{ __('Blogs') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('allcategories') }}">
+                        <i class="ni ni-bullet-list-67 text-blue"></i> {{ __('Categories') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('allledgers') }}">
+                        <i class="ni ni-collection text-blue"></i> {{ __('All Ledgers') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('allpaymentmethods') }}">
+                        <i class="ni ni-credit-card text-blue"></i> {{ __('Payment Methods') }}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('setting.edit') }}">
                         <i class="ni ni-settings text-blue"></i> {{ __('Settings') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('allusers') }}">
+                        <i class="fas fa-users text-blue"></i> {{ __('All Users') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('profile.edit') }}">
+                        <i class="ni ni-circle-08 text-blue"></i> {{ __('Profile') }}
                     </a>
                 </li>
 

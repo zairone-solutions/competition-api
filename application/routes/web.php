@@ -5,7 +5,11 @@ use Illuminate\Support\Facades\Route;
 use BeyondCode\LaravelWebSockets\Facades\WebSocketRouter;
 use Ably\AblyRest;
 
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CategoriesController;
+use App\Http\Controllers\PaymentMethodsController;
+use App\Http\Controllers\LedgersController;
 
 
 // Define a route to handle WebSocket connections
@@ -64,7 +68,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::put('profile', ['as' => 'profile.update', 'uses' => 'App\Http\Controllers\ProfileController@update']);
 
     Route::get('setting', ['as' => 'setting.edit', 'uses' => 'App\Http\Controllers\SettingController@edit']);
-    Route::put('profile', ['as' => 'setting.update', 'uses' => 'App\Http\Controllers\SettingController@update']);
+    Route::put('setting', ['as' => 'setting.update', 'uses' => 'App\Http\Controllers\SettingController@update']);
 
     // For Users Module
     Route::get('all-users', [UserController::class,'showuser'])->name('allusers');
@@ -74,6 +78,25 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('update-user/{id}', [UserController::class,'updateuser'])->name('updateuser');
     Route::get('delete-user/{id}', [UserController::class,'deleteuser'])->name('deleteuser');
 
+    // For Categories Module
+    Route::get('all-categories', [CategoriesController::class,'showcategory'])->name('allcategories');
+    Route::get('add-category', [CategoriesController::class,'addcategory'])->name('addcategory');
+    Route::post('store-category', [CategoriesController::class,'storecategory'])->name('storecategory');
+    Route::get('edit-category/{id}', [CategoriesController::class,'editcategory'])->name('editcategory');
+    Route::post('update-category/{id}', [CategoriesController::class,'updatecategory'])->name('updatecategory');
+    Route::get('delete-category/{id}', [CategoriesController::class,'deletecategory'])->name('deletecategory');
+
+    // For Payment Methods Module
+    Route::get('all-payment-methods', [PaymentMethodsController::class,'showpaymentmethods'])->name('allpaymentmethods');
+    Route::get('add-payment-method', [PaymentMethodsController::class,'addpaymentmethod'])->name('addpaymentmethod');
+    Route::post('store-payment-method', [PaymentMethodsController::class,'storepaymentmethod'])->name('storepaymentmethod');
+    Route::get('edit-payment-method/{id}', [PaymentMethodsController::class,'editpaymentmethod'])->name('editpaymentmethod');
+    Route::post('update-payment-method/{id}', [PaymentMethodsController::class,'updatepaymentmethod'])->name('updatepaymentmethod');
+    Route::post('/update-payment-method-status/{id}', [PaymentMethodsController::class, 'updateStatus'])->name('updatepaymentmethodstatus');
+    Route::get('delete-payment-method/{id}', [PaymentMethodsController::class,'deletepaymentmethod'])->name('deletepaymentmethod');
+
+    // For Ledgers Module
+    Route::get('all-ledgers', [LedgersController::class,'showledgers'])->name('allledgers');
 
 
     Route::get('upgrade', function () {
