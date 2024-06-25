@@ -90,11 +90,11 @@
                         <i class="ni ni-tv-2 text-primary"></i> {{ __('Dashboard') }}
                     </a>
                 </li> --}}
-                <li class="nav-item">
+                {{-- <li class="nav-item">
                     <a class="nav-link" href="{{ route('allcategories') }}">
                         <i class="ni ni-single-copy-04 text-blue"></i> {{ __('Blogs') }}
                     </a>
-                </li>
+                </li> --}}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('allcategories') }}">
                         <i class="ni ni-bullet-list-67 text-blue"></i> {{ __('Categories') }}
