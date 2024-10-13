@@ -47,6 +47,26 @@ class Post extends Model
     {
         return $query->where('state', "created");
     }
+    public function scopeWithMaxVotes($query, Competition $competition)
+    {
+        $max_votes = $this->select('posts.*')
+            ->where("posts.competition_id", $competition->id)
+            ->leftJoin('post_votes', 'posts.id', '=', 'post_votes.post_id')
+            ->leftJoin('competitions', 'posts.competition_id', '=', 'competitions.id')
+            ->selectRaw('posts.*, COUNT(post_votes.id) as votes_count')
+            ->groupBy('posts.id')
+            ->havingRaw('COUNT(post_votes.id) = (SELECT COUNT(post_votes.id) FROM post_votes WHERE post_votes.post_id = posts.id GROUP BY post_votes.post_id ORDER BY COUNT(post_votes.id) DESC LIMIT 1)')
+            ->get()->pluck("votes_count")->first();
+
+        return $query->selectRaw('posts.*')
+            ->where("posts.competition_id", $competition->id)
+            ->leftJoin('post_votes', 'posts.id', '=', 'post_votes.post_id')
+            ->leftJoin('competitions', 'posts.competition_id', '=', 'competitions.id')
+            ->selectRaw('posts.*, COUNT(post_votes.id) as votes_count')
+            ->groupBy('posts.id')
+            ->havingRaw("votes_count = $max_votes");
+
+    }
     // relations
     public function user()
     {

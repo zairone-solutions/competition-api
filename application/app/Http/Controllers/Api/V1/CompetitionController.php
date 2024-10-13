@@ -337,6 +337,7 @@ class CompetitionController extends BaseController
             }
 
             $competition->published_at = date("Y-m-d H:i:s", strtotime("now"));
+            $competition->state = "ready_for_participation";
 
             DB::beginTransaction();
 

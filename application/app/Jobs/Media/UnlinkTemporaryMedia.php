@@ -3,6 +3,7 @@
 namespace App\Jobs\Media;
 
 use Ably\AblyRest;
+use App\Helpers\RealTimeHelper;
 use App\Http\Resources\PostResource;
 use App\Models\Competition;
 use App\Models\Post;
@@ -44,12 +45,9 @@ class UnlinkTemporaryMedia implements ShouldQueue
     {
         unlink(storage_path("app/" . $this->temporaryFilePath));
 
-        $ably = new AblyRest(config('broadcasting.connections.ably.key'));
-
         $post = Post::findOrFail($this->media->post_id);
 
-        $channel = $ably->channels->get("post-updated");
-        $channel->publish('competition-' . $this->competition->id . "-post-" . $this->media->post_id, ['post' => PostResource::make($post)]);
+        RealTimeHelper::sendMessage("post-updated", 'competition-' . $this->competition->id . "-post-" . $this->media->post_id, ['post' => PostResource::make($post)]);
 
     }
 }

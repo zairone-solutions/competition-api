@@ -11,6 +11,7 @@ use App\Http\Controllers\CategoriesController;
 use App\Http\Controllers\PaymentMethodsController;
 use App\Http\Controllers\LedgersController;
 
+use App\Models\Competition;
 
 // Define a route to handle WebSocket connections
 
@@ -48,6 +49,10 @@ WebSocketRouter::get('/socket', \App\Http\Controllers\WebSocketController::class
 
 Route::get('/', function () {
     return view('welcome');
+});
+Route::get('/test', function () {
+    $competition = Competition::findOrFail(1);
+    dd($competition->posts()->withMaxVotes($competition)->get()->toArray());
 });
 Route::get('/test-sockets', function () {
     return view('test-sockets');

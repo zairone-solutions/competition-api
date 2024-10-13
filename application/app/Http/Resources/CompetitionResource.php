@@ -37,17 +37,20 @@ class CompetitionResource extends BaseResource
             "expired" => strtotime($this->announcement_at) < time(),
             'category' => CategoryResource::make($this->category),
             "organizer" => UserResource::make($this->organizer),
-            "winner" => UserResource::make($this->winner),
+            "winners" => [],
             "myDraftPosts" => [],
             "myPost" => null,
         ];
+
+        foreach ($this->winners()->get() as $winner) {
+            $data['winners'][] = UserResource::make($winner->winner);
+        }
         if ($this->posts()->where(["user_id" => auth()->id(), "state" => "draft"])->count()) {
             $data["myDraftPosts"] = PostResource::collection($this->posts()->where(["user_id" => auth()->id(), "state" => "draft"])->get());
         }
         if ($this->posts()->where("user_id", auth()->id())->where("state", "!=", "draft")->count()) {
             $data["myPost"] = PostResource::make($this->posts()->where("user_id", auth()->id())->where("state", "!=", "draft")->first());
         }
-
         if ($this->participants()->where("participant_id", auth()->id())->count()) {
             $data['participated'] = TRUE;
         }

@@ -132,7 +132,7 @@ class PaymentController extends BaseController
             ]);
 
             $payment->update(["verified_at" => date("Y-m-d H:i:s")]);
-            $competition->update(["payment_verified_at" => date("Y-m-d H:i:s")]);
+            $competition->update(["state" => "pending_publish", "payment_verified_at" => date("Y-m-d H:i:s")]);
 
             if ($user->type !== "organizer") {
                 $user->update(['type' => 'organizer']);

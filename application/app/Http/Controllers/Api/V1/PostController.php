@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\CompetitionHelper;
+use App\Helpers\NotificationHelper;
 use App\Helpers\RuleHelper;
 use App\Http\Resources\CompetitionResource;
 use App\Http\Resources\PostCommentResource;
@@ -336,7 +337,7 @@ class PostController extends BaseController
             }
 
             @Mail::to($post->user)->send(new PostPublishAlert(['organizer' => $competition->organizer, 'competition' => $competition]));
-            $this->triggerNotification($post->user->id, $post->user->notification_token, "Post published for approval!", 'published_post', "A user has published a post for approval in " . $this->cName($competition->slug), ['id' => $post->id]);
+            NotificationHelper::send($post->user->id, $post->user->notification_token, "Post published for approval!", 'published_post', "A user has published a post for approval in " . $this->cName($competition->slug), ['id' => $post->id]);
 
             DB::commit();
 
@@ -356,7 +357,7 @@ class PostController extends BaseController
 
         // Email & Notifications
         @Mail::to($post->user)->send(new PostApproveAlert(['organizer' => $competition->organizer, 'competition' => $competition]));
-        $this->triggerNotification($post->user->id, $post->user->notification_token, "Post Approved!", 'approved', "Your post has been approved by the organizer of " . $this->cName($competition->slug), ['id' => $post->id]);
+        NotificationHelper::send($post->user->id, $post->user->notification_token, "Post Approved!", 'approved', "Your post has been approved by the organizer of " . $this->cName($competition->slug), ['id' => $post->id]);
 
         return $this->resData(PostOrganizerResource::make($post));
     }
@@ -385,7 +386,7 @@ class PostController extends BaseController
 
         // Email & Notifications
         @Mail::to($post->user)->send(new PostObjectionAlert(['objection' => $post->objection, 'competition' => $competition]));
-        $this->triggerNotification($post->user->id, $post->user->notification_token, "Post objected!", 'objection', $this->cName($competition->slug) . " organizer has put an objection on your post.", ['id' => $post->id]);
+        NotificationHelper::send($post->user->id, $post->user->notification_token, "Post objected!", 'objection', $this->cName($competition->slug) . " organizer has put an objection on your post.", ['id' => $post->id]);
 
         return $this->resData(PostObjectionResource::make($post->objection));
     }
@@ -402,7 +403,7 @@ class PostController extends BaseController
 
         // Email & Notification
         @Mail::to($post->user)->send(new PostVoteAlert(['organizer' => $competition->organizer, 'competition' => $competition, 'vote' => $vote]));
-        $this->triggerNotification($post->user->id, $post->user->notification_token, "Vote casted!", 'voted', "Your voted in " . $this->cName($competition->slug), ['id' => $post->id], NULL);
+        NotificationHelper::send($post->user->id, $post->user->notification_token, "Vote casted!", 'voted', "Your voted in " . $this->cName($competition->slug), ['id' => $post->id], NULL);
 
         return $this->resData(PostVoterResource::make($post));
     }
@@ -421,7 +422,7 @@ class PostController extends BaseController
 
         // Email & Notifications
         @Mail::to($post->user)->send(new PostReportAlert(['report' => $report, 'competition' => $post->competition, 'user' => auth()->user()]));
-        $this->triggerNotification($post->user->id, $post->user->notification_token, "Post Reported!", 'reported', auth()->user()->username . " has reported a post in " . $this->cName($competition->slug) . ".", ['id' => $report->id]);
+        NotificationHelper::send($post->user->id, $post->user->notification_token, "Post Reported!", 'reported', auth()->user()->username . " has reported a post in " . $this->cName($competition->slug) . ".", ['id' => $report->id]);
 
         return $this->resData(PostReportResource::make($report));
     }
